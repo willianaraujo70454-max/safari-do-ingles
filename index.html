@@ -313,6 +313,7 @@
     <div class="word-card" id="tapStep">
       <p class="prompt-pt">Toque na imagem certa</p>
       <p class="target-word" id="targetWord">word</p>
+      <p class="voice-pt" id="tapWordPt" style="margin-bottom:14px;"></p>
       <button class="speak-btn" id="speakBtn">🔊</button>
     </div>
     <div class="options-grid" id="optionsGrid"></div>
@@ -358,88 +359,88 @@
 // ---------------- CONTENT BANK ----------------
 const CATEGORIES = [
   { id:'animals', name:'Bichos', sub:'Animals', emoji:'🦁', words:[
-    {en:'cat', emoji:'🐱'}, {en:'dog', emoji:'🐶'}, {en:'elephant', emoji:'🐘'},
-    {en:'lion', emoji:'🦁'}, {en:'fish', emoji:'🐟'}, {en:'bird', emoji:'🐦'},
-    {en:'rabbit', emoji:'🐰'}, {en:'monkey', emoji:'🐒'}
+    {en:'cat', pt:'gato', emoji:'🐱'}, {en:'dog', pt:'cachorro', emoji:'🐶'}, {en:'elephant', pt:'elefante', emoji:'🐘'},
+    {en:'lion', pt:'leão', emoji:'🦁'}, {en:'fish', pt:'peixe', emoji:'🐟'}, {en:'bird', pt:'pássaro', emoji:'🐦'},
+    {en:'rabbit', pt:'coelho', emoji:'🐰'}, {en:'monkey', pt:'macaco', emoji:'🐒'}
   ]},
   { id:'colors', name:'Cores', sub:'Colors', emoji:'🎨', words:[
-    {en:'red', emoji:'🔴'}, {en:'blue', emoji:'🔵'}, {en:'yellow', emoji:'🟡'},
-    {en:'green', emoji:'🟢'}, {en:'purple', emoji:'🟣'}, {en:'orange', emoji:'🟠'}
+    {en:'red', pt:'vermelho', emoji:'🔴'}, {en:'blue', pt:'azul', emoji:'🔵'}, {en:'yellow', pt:'amarelo', emoji:'🟡'},
+    {en:'green', pt:'verde', emoji:'🟢'}, {en:'purple', pt:'roxo', emoji:'🟣'}, {en:'orange', pt:'laranja', emoji:'🟠'}
   ]},
   { id:'numbers', name:'Números', sub:'Numbers', emoji:'🔢', words:[
-    {en:'one', emoji:'1️⃣'}, {en:'two', emoji:'2️⃣'}, {en:'three', emoji:'3️⃣'},
-    {en:'four', emoji:'4️⃣'}, {en:'five', emoji:'5️⃣'}, {en:'six', emoji:'6️⃣'},
-    {en:'seven', emoji:'7️⃣'}, {en:'eight', emoji:'8️⃣'}, {en:'nine', emoji:'9️⃣'}, {en:'ten', emoji:'🔟'}
+    {en:'one', pt:'um', emoji:'1️⃣'}, {en:'two', pt:'dois', emoji:'2️⃣'}, {en:'three', pt:'três', emoji:'3️⃣'},
+    {en:'four', pt:'quatro', emoji:'4️⃣'}, {en:'five', pt:'cinco', emoji:'5️⃣'}, {en:'six', pt:'seis', emoji:'6️⃣'},
+    {en:'seven', pt:'sete', emoji:'7️⃣'}, {en:'eight', pt:'oito', emoji:'8️⃣'}, {en:'nine', pt:'nove', emoji:'9️⃣'}, {en:'ten', pt:'dez', emoji:'🔟'}
   ]},
   { id:'shapes', name:'Formas', sub:'Shapes', emoji:'⭐', words:[
-    {en:'circle', emoji:'⚪'}, {en:'square', emoji:'◼️'}, {en:'triangle', emoji:'🔺'},
-    {en:'star', emoji:'⭐'}, {en:'heart', emoji:'❤️'}, {en:'diamond', emoji:'🔷'}
+    {en:'circle', pt:'círculo', emoji:'⚪'}, {en:'square', pt:'quadrado', emoji:'◼️'}, {en:'triangle', pt:'triângulo', emoji:'🔺'},
+    {en:'star', pt:'estrela', emoji:'⭐'}, {en:'heart', pt:'coração', emoji:'❤️'}, {en:'diamond', pt:'losango', emoji:'🔷'}
   ]},
   { id:'food', name:'Comida', sub:'Food', emoji:'🍎', words:[
-    {en:'apple', emoji:'🍎'}, {en:'banana', emoji:'🍌'}, {en:'bread', emoji:'🍞'},
-    {en:'milk', emoji:'🥛'}, {en:'egg', emoji:'🥚'}, {en:'cake', emoji:'🍰'},
-    {en:'cheese', emoji:'🧀'}, {en:'grape', emoji:'🍇'}
+    {en:'apple', pt:'maçã', emoji:'🍎'}, {en:'banana', pt:'banana', emoji:'🍌'}, {en:'bread', pt:'pão', emoji:'🍞'},
+    {en:'milk', pt:'leite', emoji:'🥛'}, {en:'egg', pt:'ovo', emoji:'🥚'}, {en:'cake', pt:'bolo', emoji:'🍰'},
+    {en:'cheese', pt:'queijo', emoji:'🧀'}, {en:'grape', pt:'uva', emoji:'🍇'}
   ]},
   { id:'body', name:'Corpo', sub:'Body', emoji:'✋', words:[
-    {en:'hand', emoji:'✋'}, {en:'foot', emoji:'🦶'}, {en:'eye', emoji:'👁️'},
-    {en:'ear', emoji:'👂'}, {en:'nose', emoji:'👃'}, {en:'mouth', emoji:'👄'}
+    {en:'hand', pt:'mão', emoji:'✋'}, {en:'foot', pt:'pé', emoji:'🦶'}, {en:'eye', pt:'olho', emoji:'👁️'},
+    {en:'ear', pt:'orelha', emoji:'👂'}, {en:'nose', pt:'nariz', emoji:'👃'}, {en:'mouth', pt:'boca', emoji:'👄'}
   ]},
   { id:'family', name:'Família', sub:'Family', emoji:'👨‍👩‍👧', words:[
-    {en:'mom', emoji:'👩'}, {en:'dad', emoji:'👨'}, {en:'sister', emoji:'👧'},
-    {en:'brother', emoji:'👦'}, {en:'baby', emoji:'👶'}, {en:'grandma', emoji:'👵'}
+    {en:'mom', pt:'mãe', emoji:'👩'}, {en:'dad', pt:'pai', emoji:'👨'}, {en:'sister', pt:'irmã', emoji:'👧'},
+    {en:'brother', pt:'irmão', emoji:'👦'}, {en:'baby', pt:'bebê', emoji:'👶'}, {en:'grandma', pt:'vovó', emoji:'👵'}
   ]},
   { id:'clothes', name:'Roupas', sub:'Clothes', emoji:'👕', words:[
-    {en:'shirt', emoji:'👕'}, {en:'pants', emoji:'👖'}, {en:'shoes', emoji:'👟'},
-    {en:'hat', emoji:'🧢'}, {en:'dress', emoji:'👗'}, {en:'socks', emoji:'🧦'}
+    {en:'shirt', pt:'camiseta', emoji:'👕'}, {en:'pants', pt:'calça', emoji:'👖'}, {en:'shoes', pt:'sapatos', emoji:'👟'},
+    {en:'hat', pt:'boné', emoji:'🧢'}, {en:'dress', pt:'vestido', emoji:'👗'}, {en:'socks', pt:'meias', emoji:'🧦'}
   ]},
   { id:'weather', name:'Clima', sub:'Weather', emoji:'☀️', words:[
-    {en:'sun', emoji:'☀️'}, {en:'rain', emoji:'🌧️'}, {en:'snow', emoji:'❄️'},
-    {en:'wind', emoji:'💨'}, {en:'cloud', emoji:'☁️'}, {en:'storm', emoji:'⛈️'}
+    {en:'sun', pt:'sol', emoji:'☀️'}, {en:'rain', pt:'chuva', emoji:'🌧️'}, {en:'snow', pt:'neve', emoji:'❄️'},
+    {en:'wind', pt:'vento', emoji:'💨'}, {en:'cloud', pt:'nuvem', emoji:'☁️'}, {en:'storm', pt:'tempestade', emoji:'⛈️'}
   ]},
   { id:'vehicles', name:'Veículos', sub:'Vehicles', emoji:'🚗', words:[
-    {en:'car', emoji:'🚗'}, {en:'bus', emoji:'🚌'}, {en:'bike', emoji:'🚲'},
-    {en:'train', emoji:'🚆'}, {en:'boat', emoji:'⛵'}, {en:'airplane', emoji:'✈️'}
+    {en:'car', pt:'carro', emoji:'🚗'}, {en:'bus', pt:'ônibus', emoji:'🚌'}, {en:'bike', pt:'bicicleta', emoji:'🚲'},
+    {en:'train', pt:'trem', emoji:'🚆'}, {en:'boat', pt:'barco', emoji:'⛵'}, {en:'airplane', pt:'avião', emoji:'✈️'}
   ]},
   { id:'feelings', name:'Sentimentos', sub:'Feelings', emoji:'😀', words:[
-    {en:'happy', emoji:'😀'}, {en:'sad', emoji:'😢'}, {en:'angry', emoji:'😠'},
-    {en:'scared', emoji:'😱'}, {en:'tired', emoji:'😴'}, {en:'surprised', emoji:'😲'}
+    {en:'happy', pt:'feliz', emoji:'😀'}, {en:'sad', pt:'triste', emoji:'😢'}, {en:'angry', pt:'bravo', emoji:'😠'},
+    {en:'scared', pt:'assustado', emoji:'😱'}, {en:'tired', pt:'cansado', emoji:'😴'}, {en:'surprised', pt:'surpreso', emoji:'😲'}
   ]},
   { id:'verbs', name:'Ações', sub:'Verbs', emoji:'🏃', words:[
-    {en:'run', emoji:'🏃'}, {en:'jump', emoji:'🤸'}, {en:'play', emoji:'⚽'},
-    {en:'eat', emoji:'🍽️'}, {en:'sleep', emoji:'🛌'}, {en:'drink', emoji:'🥤'},
-    {en:'dance', emoji:'💃'}, {en:'sing', emoji:'🎤'}, {en:'swim', emoji:'🏊'}, {en:'walk', emoji:'🚶'}
+    {en:'run', pt:'correr', emoji:'🏃'}, {en:'jump', pt:'pular', emoji:'🤸'}, {en:'play', pt:'brincar', emoji:'⚽'},
+    {en:'eat', pt:'comer', emoji:'🍽️'}, {en:'sleep', pt:'dormir', emoji:'🛌'}, {en:'drink', pt:'beber', emoji:'🥤'},
+    {en:'dance', pt:'dançar', emoji:'💃'}, {en:'sing', pt:'cantar', emoji:'🎤'}, {en:'swim', pt:'nadar', emoji:'🏊'}, {en:'walk', pt:'andar', emoji:'🚶'}
   ]},
   { id:'school', name:'Escola', sub:'School', emoji:'✏️', words:[
-    {en:'pencil', emoji:'✏️'}, {en:'book', emoji:'📖'}, {en:'backpack', emoji:'🎒'},
-    {en:'scissors', emoji:'✂️'}, {en:'ruler', emoji:'📏'}, {en:'crayon', emoji:'🖍️'}
+    {en:'pencil', pt:'lápis', emoji:'✏️'}, {en:'book', pt:'livro', emoji:'📖'}, {en:'backpack', pt:'mochila', emoji:'🎒'},
+    {en:'scissors', pt:'tesoura', emoji:'✂️'}, {en:'ruler', pt:'régua', emoji:'📏'}, {en:'crayon', pt:'giz de cera', emoji:'🖍️'}
   ]},
   { id:'nature', name:'Natureza', sub:'Nature', emoji:'🌳', words:[
-    {en:'tree', emoji:'🌳'}, {en:'flower', emoji:'🌸'}, {en:'mountain', emoji:'⛰️'},
-    {en:'moon', emoji:'🌙'}, {en:'grass', emoji:'🌱'}, {en:'leaf', emoji:'🍃'}
+    {en:'tree', pt:'árvore', emoji:'🌳'}, {en:'flower', pt:'flor', emoji:'🌸'}, {en:'mountain', pt:'montanha', emoji:'⛰️'},
+    {en:'moon', pt:'lua', emoji:'🌙'}, {en:'grass', pt:'grama', emoji:'🌱'}, {en:'leaf', pt:'folha', emoji:'🍃'}
   ]},
   { id:'sea', name:'Mar', sub:'Sea', emoji:'🐋', words:[
-    {en:'whale', emoji:'🐋'}, {en:'shark', emoji:'🦈'}, {en:'octopus', emoji:'🐙'},
-    {en:'crab', emoji:'🦀'}, {en:'dolphin', emoji:'🐬'}, {en:'turtle', emoji:'🐢'}
+    {en:'whale', pt:'baleia', emoji:'🐋'}, {en:'shark', pt:'tubarão', emoji:'🦈'}, {en:'octopus', pt:'polvo', emoji:'🐙'},
+    {en:'crab', pt:'caranguejo', emoji:'🦀'}, {en:'dolphin', pt:'golfinho', emoji:'🐬'}, {en:'turtle', pt:'tartaruga', emoji:'🐢'}
   ]},
   { id:'insects', name:'Insetos', sub:'Insects', emoji:'🐝', words:[
-    {en:'bee', emoji:'🐝'}, {en:'butterfly', emoji:'🦋'}, {en:'ladybug', emoji:'🐞'},
-    {en:'ant', emoji:'🐜'}, {en:'spider', emoji:'🕷️'}, {en:'snail', emoji:'🐌'}
+    {en:'bee', pt:'abelha', emoji:'🐝'}, {en:'butterfly', pt:'borboleta', emoji:'🦋'}, {en:'ladybug', pt:'joaninha', emoji:'🐞'},
+    {en:'ant', pt:'formiga', emoji:'🐜'}, {en:'spider', pt:'aranha', emoji:'🕷️'}, {en:'snail', pt:'caracol', emoji:'🐌'}
   ]},
   { id:'farm', name:'Fazenda', sub:'Farm', emoji:'🐄', words:[
-    {en:'cow', emoji:'🐄'}, {en:'pig', emoji:'🐷'}, {en:'horse', emoji:'🐴'},
-    {en:'sheep', emoji:'🐑'}, {en:'chicken', emoji:'🐔'}, {en:'duck', emoji:'🦆'}
+    {en:'cow', pt:'vaca', emoji:'🐄'}, {en:'pig', pt:'porco', emoji:'🐷'}, {en:'horse', pt:'cavalo', emoji:'🐴'},
+    {en:'sheep', pt:'ovelha', emoji:'🐑'}, {en:'chicken', pt:'galinha', emoji:'🐔'}, {en:'duck', pt:'pato', emoji:'🦆'}
   ]},
   { id:'toys', name:'Brinquedos', sub:'Toys', emoji:'🧸', words:[
-    {en:'teddy bear', emoji:'🧸'}, {en:'kite', emoji:'🪁'}, {en:'robot', emoji:'🤖'},
-    {en:'blocks', emoji:'🧱'}, {en:'puzzle', emoji:'🧩'}, {en:'balloon', emoji:'🎈'}
+    {en:'teddy bear', pt:'ursinho de pelúcia', emoji:'🧸'}, {en:'kite', pt:'pipa', emoji:'🪁'}, {en:'robot', pt:'robô', emoji:'🤖'},
+    {en:'blocks', pt:'blocos', emoji:'🧱'}, {en:'puzzle', pt:'quebra-cabeça', emoji:'🧩'}, {en:'balloon', pt:'balão', emoji:'🎈'}
   ]},
   { id:'instruments', name:'Instrumentos', sub:'Instruments', emoji:'🎸', words:[
-    {en:'guitar', emoji:'🎸'}, {en:'piano', emoji:'🎹'}, {en:'drum', emoji:'🥁'},
-    {en:'violin', emoji:'🎻'}, {en:'trumpet', emoji:'🎺'}, {en:'maracas', emoji:'🪇'}
+    {en:'guitar', pt:'violão', emoji:'🎸'}, {en:'piano', pt:'piano', emoji:'🎹'}, {en:'drum', pt:'tambor', emoji:'🥁'},
+    {en:'violin', pt:'violino', emoji:'🎻'}, {en:'trumpet', pt:'trompete', emoji:'🎺'}, {en:'maracas', pt:'maracas', emoji:'🪇'}
   ]},
   { id:'jobs', name:'Profissões', sub:'Jobs', emoji:'🧑‍⚕️', words:[
-    {en:'doctor', emoji:'🧑‍⚕️'}, {en:'teacher', emoji:'🧑‍🏫'}, {en:'firefighter', emoji:'🧑‍🚒'},
-    {en:'police officer', emoji:'👮'}, {en:'chef', emoji:'🧑‍🍳'}, {en:'farmer', emoji:'🧑‍🌾'}
+    {en:'doctor', pt:'médica', emoji:'🧑‍⚕️'}, {en:'teacher', pt:'professora', emoji:'🧑‍🏫'}, {en:'firefighter', pt:'bombeira', emoji:'🧑‍🚒'},
+    {en:'police officer', pt:'policial', emoji:'👮'}, {en:'chef', pt:'cozinheira', emoji:'🧑‍🍳'}, {en:'farmer', pt:'fazendeira', emoji:'🧑‍🌾'}
   ]},
 ];
 
@@ -648,26 +649,51 @@ function pickBestVoice(lang){
   }
   return candidates[0];
 }
+function hasVoiceForLang(lang){
+  return cachedVoices.some(v => v.lang && v.lang.toLowerCase().startsWith(lang.toLowerCase()));
+}
 function speakRaw(text, rate, lang, onend){
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang || 'en-US'; u.rate = rate || 0.85; u.pitch = 1.05;
   const voice = pickBestVoice(u.lang);
   if(voice) u.voice = voice;
-  if(onend) u.onend = onend;
+  if(onend){
+    u.onend = onend;
+    u.onerror = onend; // never get stuck if a voice/lang fails — still move on
+  }
   window.speechSynthesis.speak(u);
 }
 function speak(text, rate, lang){
   if(!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
-  speakRaw(text, rate, lang);
+  // Chrome has a known bug where speak() right after cancel() can silently produce no audio.
+  setTimeout(() => speakRaw(text, rate, lang), 60);
 }
 // Speaks a short Portuguese introduction first (giving context/meaning), then the English target.
+// If there is no Portuguese voice installed on this device, skips straight to English —
+// the written translation on screen still gives context either way.
 function speakWithContext(ptText, enText, enRate){
   if(!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
-  speakRaw(`Como eu digo "${ptText}" em inglês? Assim:`, 0.95, 'pt-BR', () => {
-    setTimeout(() => speakRaw(enText, enRate, 'en-US'), 250);
-  });
+
+  if(!ptText || !hasVoiceForLang('pt')){
+    setTimeout(() => speakRaw(enText, enRate, 'en-US'), 60);
+    return;
+  }
+
+  let advanced = false;
+  const goToEnglish = () => {
+    if(advanced) return;
+    advanced = true;
+    speakRaw(enText, enRate, 'en-US');
+  };
+  setTimeout(() => {
+    speakRaw(`Como eu digo "${ptText}" em inglês? Assim:`, 0.95, 'pt-BR', () => {
+      setTimeout(goToEnglish, 250);
+    });
+    // Safety net: some browsers never fire onend for pt-BR if the voice is missing — don't get stuck silent.
+    setTimeout(goToEnglish, 3500);
+  }, 60);
 }
 
 function fmtTime(totalSeconds){
@@ -837,6 +863,7 @@ function loadWord(){
 
   document.querySelector('.prompt-pt').textContent = 'Toque na imagem certa';
   targetWordEl.textContent = current.en;
+  document.getElementById('tapWordPt').textContent = current.pt ? `(${current.pt})` : '';
 
   const distractorCount = currentOptionsCount - 1;
   let pool = currentCategory.words.filter(w => w.en !== current.en);
@@ -873,11 +900,7 @@ speakBtn.addEventListener('click', () => {
 voiceSpeakBtn.addEventListener('click', () => {
   const current = phaseWords[roundIndex];
   if(!current) return;
-  if(current.type === 'phrase'){
-    speakWithContext(current.pt, current.en, currentRate);
-  } else {
-    speak(current.en, currentRate);
-  }
+  speakWithContext(current.pt, current.en, currentRate);
 });
 
 function handleAnswer(isCorrect, btnEl){
@@ -916,13 +939,14 @@ function showVoiceStep(){
   if(current.type === 'phrase'){
     instructionsEl.textContent = 'Agora repete a frase:';
     voiceHint.textContent = 'Toque no microfone e fale a frase toda';
-    voicePt.textContent = `(${current.pt})`;
-    voicePt.style.display = '';
   } else {
     instructionsEl.textContent = 'Agora fala em voz alta:';
     voiceHint.textContent = 'Toque no microfone e repita a palavra';
-    voicePt.textContent = '';
-    voicePt.style.display = 'none';
+  }
+  voicePt.textContent = current.pt ? `(${current.pt})` : '';
+  voicePt.style.display = current.pt ? '' : 'none';
+  if(current.pt && !hasVoiceForLang('pt')){
+    voicePt.textContent += ' — instale a voz em português nas configurações do celular 🔈';
   }
 
   if(!recognition){
@@ -934,10 +958,8 @@ function showVoiceStep(){
     micBtn.disabled = false;
   }
 
-  // For phrases, narrate the Portuguese meaning first so she knows what she's about to say.
-  if(current.type === 'phrase'){
-    setTimeout(() => speakWithContext(current.pt, current.en, currentRate), 400);
-  }
+  // Narrate the Portuguese meaning first so she knows what she's about to say, then the English target.
+  setTimeout(() => speakWithContext(current.pt, current.en, currentRate), 400);
 }
 
 function checkAlternativesForMatch(results, target, matcherFn){
