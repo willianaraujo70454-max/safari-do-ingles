@@ -436,10 +436,14 @@
     <p class="level-heading">Teste de nível</p>
     <div class="progress-row" id="placementProgressRow"></div>
     <div class="word-card">
-      <p class="prompt-pt">Toque na imagem certa</p>
+      <p class="prompt-pt" id="placementPrompt">Toque na imagem certa</p>
       <p class="target-word" id="placementTargetWord">word</p>
     </div>
     <div class="options-grid" id="placementOptionsGrid"></div>
+    <div id="placementMicSection" style="display:none; flex-direction:column; align-items:center; gap:10px; padding:10px 0;">
+      <button class="mic-btn" id="placementMicBtn">🎤</button>
+      <p class="voice-status" id="placementVoiceStatus"></p>
+    </div>
     <div class="feedback-banner" id="placementFeedback"></div>
   </section>
 
@@ -495,6 +499,16 @@
       <label class="settings-label">Teste de nível</label>
       <p class="settings-hint" style="margin-top:0;">Refaça o teste rápido pra reajustar em qual fase e dificuldade começar.</p>
       <button class="btn secondary" id="retakePlacementBtn">🧭 Refazer teste de nível</button>
+    </div>
+
+    <div class="settings-card">
+      <label class="settings-label">Escolher nível manualmente</label>
+      <p class="settings-hint" style="margin-top:0;">Prefere escolher direto em vez de fazer o teste? Toque no nível desejado.</p>
+      <div class="gender-toggle" style="margin-bottom:10px;">
+        <button class="gender-btn" id="levelBasico" data-level="basico">🌱 Básico</button>
+        <button class="gender-btn" id="levelIntermediario" data-level="intermediario">🌿 Intermediário</button>
+        <button class="gender-btn" id="levelAvancado" data-level="avancado">🌳 Avançado</button>
+      </div>
     </div>
   </section>
 
@@ -681,7 +695,8 @@ const PHRASE_START_DIFFICULTY = 4; // from this difficulty level onward, phases 
 const MAX_VOICE_ATTEMPTS = 3;
 const STORAGE_KEY = 'safariEnglishProgress';
 const SETTINGS_KEY = 'safariEnglishSettings';
-const DIFF_LABELS = { 2:'Nível fácil', 3:'Nível fácil', 4:'Frases · fácil', 5:'Frases · médio', 6:'Frases · difícil' };
+const DIFF_LABELS = { 2:'Básico', 3:'Básico', 4:'Intermediário', 5:'Intermediário', 6:'Avançado' };
+const LEVEL_KEY_BY_DIFFICULTY = (d) => d <= 3 ? 'basico' : d <= 5 ? 'intermediario' : 'avancado';
 
 function getWordSpeechRate(difficultyLevel){
   return 0.8 + (difficultyLevel - MIN_DIFFICULTY) * 0.035;
@@ -741,6 +756,7 @@ function loadProgress(){
     saveProgress();
   }
   if(!progress.wordStats) progress.wordStats = {};
+  if(!progress.phraseUsage) progress.phraseUsage = {};
   if(!progress.badges) progress.badges = [];
   if(progress.placementTestDone === undefined) progress.placementTestDone = false;
 }
@@ -1161,6 +1177,22 @@ function buildPhaseWordPool(featuredCat){
   return shuffle(pool).slice(0, Math.min(PHASE_WORD_COUNT, pool.length));
 }
 
+const PHRASE_MAX_REPEATS = 2;
+function buildPhrasePool(tier){
+  if(!progress.phraseUsage) progress.phraseUsage = {};
+  const tierPhrases = PHRASES.filter((p) => p.tier === tier);
+  let available = tierPhrases.filter((p) => (progress.phraseUsage[p.en] || 0) < PHRASE_MAX_REPEATS);
+  if(available.length < Math.min(PHASE_WORD_COUNT, tierPhrases.length)){
+    // Every phrase in this tier has already been used its max times — recycle the whole tier for variety.
+    tierPhrases.forEach((p) => { progress.phraseUsage[p.en] = 0; });
+    available = tierPhrases;
+  }
+  const chosen = shuffle(available).slice(0, Math.min(PHASE_WORD_COUNT, available.length));
+  chosen.forEach((p) => { progress.phraseUsage[p.en] = (progress.phraseUsage[p.en] || 0) + 1; });
+  saveProgress();
+  return chosen;
+}
+
 function startPhase(isMainPhase, reviewCategory){
   if(isMainPhase){
     const featured = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
@@ -1174,8 +1206,7 @@ function startPhase(isMainPhase, reviewCategory){
     } else {
       currentPhaseTier = determinePhaseTier(progress.difficultyLevel);
       currentRate = getPhraseSpeechRate();
-      const tierPhrases = PHRASES.filter(p => p.tier === currentPhaseTier);
-      phaseWords = shuffle(tierPhrases).slice(0, Math.min(PHASE_WORD_COUNT, tierPhrases.length)).map(p => ({...p, type:'phrase'}));
+      phaseWords = buildPhrasePool(currentPhaseTier).map(p => ({...p, type:'phrase'}));
       levelHeading.textContent = `Fase ${progress.phaseNumber} · Frases (nível ${currentPhaseTier})`;
     }
   } else {
@@ -1387,13 +1418,18 @@ micBtn.addEventListener('click', () => {
       micBtn.classList.remove('listening');
       playErrorSound();
       vibrateError();
-      if(voiceAttempts >= MAX_VOICE_ATTEMPTS){
+      const firstBit = isPhrase ? current.en.split(' ')[0] : current.en[0].toUpperCase();
+      if(isPhrase){
+        // Phrases must be repeated until she gets them right — no giving up.
+        voiceStatus.textContent = `Quase! Ouvi "${bestGuess}" — vamos tentar de novo até acertar! 💪 (dica: começa com "${firstBit}")`;
+        voiceStatus.className = 'voice-status bad';
+        micBtn.disabled = false;
+      } else if(voiceAttempts >= MAX_VOICE_ATTEMPTS){
         voiceStatus.textContent = `Quase lá! A gente pratica essa de novo depois 💪`;
         voiceStatus.className = 'voice-status bad';
-        if(!isPhrase) recordWordResult(current.en, false);
+        recordWordResult(current.en, false);
         setTimeout(() => advanceAfterVoice(), 1400);
       } else {
-        const firstBit = isPhrase ? current.en.split(' ')[0] : current.en[0].toUpperCase();
         voiceStatus.textContent = `Quase! Ouvi "${bestGuess}" — tenta de novo 🙂 (dica: começa com "${firstBit}")`;
         voiceStatus.className = 'voice-status bad';
         micBtn.disabled = false;
@@ -1404,7 +1440,11 @@ micBtn.addEventListener('click', () => {
     if(handled) return;
     micBtn.classList.remove('listening');
     voiceAttempts++;
-    if(voiceAttempts >= MAX_VOICE_ATTEMPTS){
+    if(isPhrase){
+      voiceStatus.textContent = 'Não peguei direito — tenta de novo até acertar! 🙂';
+      voiceStatus.className = 'voice-status bad';
+      micBtn.disabled = false;
+    } else if(voiceAttempts >= MAX_VOICE_ATTEMPTS){
       voiceStatus.textContent = 'Não consegui ouvir — vamos seguir em frente!';
       voiceStatus.className = 'voice-status bad';
       setTimeout(() => advanceAfterVoice(), 1400);
@@ -1900,6 +1940,7 @@ function renderSettingsScreen(){
   settingsGreetingInput.value = settings.customGreeting || '';
   pendingGender = settings.gender || 'menina';
   updateGenderButtons();
+  updateLevelButtonsHighlight();
   showScreen('settings');
 }
 function updateGenderButtons(){
@@ -1908,6 +1949,32 @@ function updateGenderButtons(){
 }
 genderMeninoBtn.addEventListener('click', () => { pendingGender = 'menino'; updateGenderButtons(); });
 genderMeninaBtn.addEventListener('click', () => { pendingGender = 'menina'; updateGenderButtons(); });
+
+function updateLevelButtonsHighlight(){
+  const current = LEVEL_KEY_BY_DIFFICULTY(progress.difficultyLevel);
+  document.getElementById('levelBasico').classList.toggle('selected', current === 'basico');
+  document.getElementById('levelIntermediario').classList.toggle('selected', current === 'intermediario');
+  document.getElementById('levelAvancado').classList.toggle('selected', current === 'avancado');
+}
+const MANUAL_LEVEL_MAP = {
+  basico: { diff: MIN_DIFFICULTY, phase: 1, label: 'Básico' },
+  intermediario: { diff: 4, phase: 10, label: 'Intermediário' },
+  avancado: { diff: 6, phase: 18, label: 'Avançado' },
+};
+function applyManualLevel(levelKey){
+  const m = MANUAL_LEVEL_MAP[levelKey];
+  if(!m) return;
+  const sure = confirm(`Mudar para o nível ${m.label}? Isso ajusta a fase atual e a dificuldade dela.`);
+  if(!sure) return;
+  progress.difficultyLevel = m.diff;
+  progress.phaseNumber = Math.max(progress.phaseNumber, m.phase);
+  progress.placementTestDone = true;
+  saveProgress();
+  updateLevelButtonsHighlight();
+}
+document.getElementById('levelBasico').addEventListener('click', () => applyManualLevel('basico'));
+document.getElementById('levelIntermediario').addEventListener('click', () => applyManualLevel('intermediario'));
+document.getElementById('levelAvancado').addEventListener('click', () => applyManualLevel('avancado'));
 
 settingsBtn.addEventListener('click', renderSettingsScreen);
 settingsBackBtn.addEventListener('click', () => renderHome());
@@ -1932,27 +1999,34 @@ document.getElementById('retakePlacementBtn').addEventListener('click', () => {
 });
 
 // ---------------- PLACEMENT TEST ----------------
-const PLACEMENT_QUESTION_COUNT = 8;
 let placementQuestions = [];
 let placementIndex = 0;
-let placementCorrect = 0;
+let placementResults = [];
 let placementAwaiting = true;
 let pendingPlacementResult = null;
 
 function buildPlacementQuestions(){
-  // Sample words spread across the whole content bank, from easiest to hardest categories.
-  const sampleIdx = [0, 2, 4, 6, 8, 11, 14, 18];
-  return sampleIdx.map((idx) => {
+  // Section A: 6 vocabulary questions spread from easy to hard categories.
+  const vocabIdx = [0, 3, 6, 9, 13, 17];
+  const vocabQuestions = vocabIdx.map((idx) => {
     const cat = CATEGORIES[Math.min(idx, CATEGORIES.length - 1)];
     const word = cat.words[Math.floor(Math.random() * cat.words.length)];
-    return { ...word, catId: cat.id };
+    return { kind:'vocab', ...word, catId: cat.id };
   });
+  // Section B: 3 simple-phrase comprehension questions (does she understand beyond single words?).
+  const phraseQuestions = shuffle(PHRASES.filter((p) => p.tier === 1)).slice(0, 3)
+    .map((p) => ({ kind:'phrase', ...p }));
+  // Section C: 2 speaking checks using the microphone (how well can she pronounce known words?).
+  const speakPool = CATEGORIES.slice(8).flatMap((c) => c.words);
+  const speakQuestions = shuffle(speakPool).slice(0, 2).map((w) => ({ kind:'speak', ...w }));
+
+  return [...vocabQuestions, ...phraseQuestions, ...speakQuestions];
 }
 
 function startPlacementTest(){
   placementQuestions = buildPlacementQuestions();
   placementIndex = 0;
-  placementCorrect = 0;
+  placementResults = [];
   showScreen('placementQuiz');
   buildPlacementProgress();
   loadPlacementQuestion();
@@ -1988,8 +2062,45 @@ function loadPlacementQuestion(){
   updatePlacementProgress();
 
   const current = placementQuestions[placementIndex];
-  document.getElementById('placementTargetWord').textContent = current.en;
+  const grid = document.getElementById('placementOptionsGrid');
+  const micSection = document.getElementById('placementMicSection');
+  const promptEl = document.getElementById('placementPrompt');
 
+  if(current.kind === 'speak'){
+    // Speaking check: show the word, she tries to say it — recorded silently, always continues after.
+    grid.style.display = 'none';
+    micSection.style.display = 'flex';
+    promptEl.textContent = 'Fale essa palavra no microfone';
+    document.getElementById('placementTargetWord').textContent = current.en;
+    document.getElementById('placementVoiceStatus').textContent = '';
+    setTimeout(() => speak(current.en, 0.85), 300);
+    return;
+  }
+
+  grid.style.display = '';
+  micSection.style.display = 'none';
+
+  if(current.kind === 'phrase'){
+    promptEl.textContent = 'Qual figura combina com a frase?';
+    document.getElementById('placementTargetWord').textContent = current.en;
+    const tier1 = PHRASES.filter((p) => p.tier === 1 && p.en !== current.en);
+    let pool = shuffle(tier1).slice(0, 3);
+    const options = shuffle([current, ...pool]);
+    grid.innerHTML = '';
+    options.forEach((opt) => {
+      const b = document.createElement('button');
+      b.className = 'opt-btn';
+      b.textContent = opt.emoji;
+      b.addEventListener('click', () => handlePlacementAnswer(opt.en === current.en, b));
+      grid.appendChild(b);
+    });
+    setTimeout(() => speak(current.en, 0.85), 300);
+    return;
+  }
+
+  // vocab
+  promptEl.textContent = 'Toque na imagem certa';
+  document.getElementById('placementTargetWord').textContent = current.en;
   const cat = CATEGORIES.find((c) => c.id === current.catId);
   let pool = cat.words.filter((w) => w.en !== current.en);
   pool = shuffle(pool).slice(0, 3);
@@ -1998,8 +2109,6 @@ function loadPlacementQuestion(){
     pool = pool.concat(shuffle(extra).slice(0, 3 - pool.length));
   }
   const options = shuffle([current, ...pool]);
-
-  const grid = document.getElementById('placementOptionsGrid');
   grid.innerHTML = '';
   options.forEach((opt) => {
     const b = document.createElement('button');
@@ -2008,19 +2117,18 @@ function loadPlacementQuestion(){
     b.addEventListener('click', () => handlePlacementAnswer(opt.en === current.en, b));
     grid.appendChild(b);
   });
-
   setTimeout(() => speak(current.en, 0.85), 300);
 }
 
 function handlePlacementAnswer(isCorrect, btnEl){
   if(!placementAwaiting) return;
   placementAwaiting = false;
+  const current = placementQuestions[placementIndex];
   const feedback = document.getElementById('placementFeedback');
   if(isCorrect){
     btnEl.classList.add('correct');
     feedback.textContent = randomPraise();
     feedback.className = 'feedback-banner show good';
-    placementCorrect++;
     playSuccessSound();
     vibrateSuccess();
   } else {
@@ -2030,16 +2138,66 @@ function handlePlacementAnswer(isCorrect, btnEl){
     playErrorSound();
     vibrateError();
   }
+  placementResults.push({ kind: current.kind, correct: isCorrect });
   setTimeout(() => { placementIndex++; loadPlacementQuestion(); }, 900);
 }
 
+document.getElementById('placementMicBtn').addEventListener('click', () => {
+  const current = placementQuestions[placementIndex];
+  const micBtnEl = document.getElementById('placementMicBtn');
+  const statusEl = document.getElementById('placementVoiceStatus');
+  if(!recognition){
+    placementResults.push({ kind:'speak', correct: false });
+    setTimeout(() => { placementIndex++; loadPlacementQuestion(); }, 600);
+    return;
+  }
+  micBtnEl.classList.add('listening');
+  statusEl.textContent = 'Ouvindo... 👂';
+  let handled = false;
+  recognition.onresult = (event) => {
+    handled = true;
+    const said = event.results[0][0].transcript;
+    const isMatch = isCloseMatch(said, current.en);
+    micBtnEl.classList.remove('listening');
+    if(isMatch){
+      statusEl.textContent = `Perfeito! 🎉`;
+      playSuccessSound();
+      vibrateSuccess();
+    } else {
+      statusEl.textContent = `Ouvi "${said}" — tudo bem, seguindo em frente!`;
+      playErrorSound();
+    }
+    placementResults.push({ kind:'speak', correct: isMatch });
+    setTimeout(() => { placementIndex++; loadPlacementQuestion(); }, 1100);
+  };
+  recognition.onerror = () => {
+    if(handled) return;
+    micBtnEl.classList.remove('listening');
+    statusEl.textContent = 'Não peguei — seguindo em frente!';
+    placementResults.push({ kind:'speak', correct: false });
+    setTimeout(() => { placementIndex++; loadPlacementQuestion(); }, 1100);
+  };
+  try{ recognition.start(); }catch(e){ micBtnEl.classList.remove('listening'); }
+});
+
 function finishPlacementTest(){
-  const scorePct = placementCorrect / placementQuestions.length;
+  const vocabResults = placementResults.filter((r) => r.kind === 'vocab');
+  const phraseResults = placementResults.filter((r) => r.kind === 'phrase');
+  const speakResults = placementResults.filter((r) => r.kind === 'speak');
+
+  const vocabScore = vocabResults.length ? vocabResults.filter((r) => r.correct).length / vocabResults.length : 0;
+  const phraseScore = phraseResults.length ? phraseResults.filter((r) => r.correct).length / phraseResults.length : 0;
+  const speakScore = speakResults.length ? speakResults.filter((r) => r.correct).length / speakResults.length : 0;
+
+  // Vocabulary matters most, phrase comprehension next, pronunciation as a smaller bonus signal.
+  const overall = (vocabScore * 0.5) + (phraseScore * 0.3) + (speakScore * 0.2);
+  const totalCorrect = placementResults.filter((r) => r.correct).length;
+
   let startPhaseNum, startDiff, level;
-  if(scorePct >= 0.85){
-    startDiff = 4; startPhaseNum = 10; level = 'avançado';
-  } else if(scorePct >= 0.5){
-    startDiff = 3; startPhaseNum = 5; level = 'intermediário';
+  if(overall >= 0.8){
+    startDiff = 6; startPhaseNum = 18; level = 'avançado';
+  } else if(overall >= 0.45){
+    startDiff = 4; startPhaseNum = 10; level = 'intermediário';
   } else {
     startDiff = MIN_DIFFICULTY; startPhaseNum = 1; level = 'iniciante';
   }
@@ -2047,7 +2205,7 @@ function finishPlacementTest(){
 
   document.getElementById('placementResultTitle').textContent = `Nível ${level}! 🎯`;
   document.getElementById('placementResultText').textContent =
-    `Você acertou ${placementCorrect} de ${placementQuestions.length}. Vamos começar na Fase ${startPhaseNum}!`;
+    `Você acertou ${totalCorrect} de ${placementQuestions.length} (vocabulário, frases e pronúncia). Vamos começar na Fase ${startPhaseNum}!`;
   showScreen('placementResult');
 }
 
