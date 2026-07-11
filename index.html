@@ -146,7 +146,10 @@
   .voice-step.active{ display:flex; }
   .voice-instructions{ font-size:13px; font-weight:700; color:#9186b8; text-transform:uppercase; letter-spacing:.5px; margin:0 0 4px; }
   .voice-target{
-    font-family:'Baloo 2', sans-serif; font-size: clamp(30px, 9vw, 42px); font-weight:800; color:var(--plum); margin:0 0 20px;
+    font-family:'Baloo 2', sans-serif; font-size: clamp(30px, 9vw, 42px); font-weight:800; color:var(--plum); margin:0 0 4px;
+  }
+  .voice-pt{
+    font-size:15px; font-weight:700; color:#6b5b95; margin:0 0 18px; font-style:italic;
   }
   .mic-btn{
     border:none; width:96px; height:96px; border-radius:50%;
@@ -183,6 +186,55 @@
   }
   .btn.primary{ background: var(--coral); color:white; }
   .btn.secondary{ background: var(--white); color:var(--plum); }
+  .btn.recess{ background: var(--grape); color:white; }
+
+  /* MINIGAME SELECT */
+  .mini-card{
+    display:flex; align-items:center; gap:14px; width:100%;
+    background: var(--white); border:none; border-radius:20px; padding:16px;
+    box-shadow: var(--shadow); margin-bottom:12px; cursor:pointer; text-align:left;
+  }
+  .mini-card:active{ transform: translateY(3px); box-shadow:none; }
+  .mini-card .mc-emoji{ font-size:34px; flex:none; }
+  .mini-card .mc-title{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:16px; color:var(--plum); }
+  .mini-card .mc-desc{ font-size:12px; font-weight:700; color:#9186b8; }
+
+  /* TIC TAC TOE */
+  .ttt-board{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; max-width:280px; margin:20px auto; }
+  .ttt-cell{
+    aspect-ratio:1; border-radius:16px; background:var(--white); box-shadow:var(--shadow);
+    border:none; font-size:40px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .ttt-cell:active{ transform: translateY(2px); box-shadow:none; }
+  .mini-status{ text-align:center; font-family:'Baloo 2', sans-serif; font-weight:800; font-size:17px; color:var(--plum); margin:10px 0; }
+
+  /* WORD GUESS */
+  .guess-mood{ font-size:56px; text-align:center; margin:10px 0; }
+  .guess-word{ display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:14px 0 20px; }
+  .guess-letter-slot{
+    width:34px; height:42px; border-bottom:4px solid var(--plum); display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:22px; color:var(--plum);
+  }
+  .guess-keyboard{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+  .guess-key{
+    width:30px; height:38px; border-radius:8px; border:none; background:var(--white); box-shadow:var(--shadow);
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:14px; cursor:pointer;
+  }
+  .guess-key:active{ transform: translateY(2px); box-shadow:none; }
+  .guess-key.used{ opacity:.35; pointer-events:none; }
+
+  /* FIND THE DIFFERENT */
+  .diff-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; max-width:280px; margin:20px auto; }
+  .diff-cell{
+    aspect-ratio:1; border-radius:16px; background:var(--white); box-shadow:var(--shadow);
+    border:none; font-size:38px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .diff-cell:active{ transform: translateY(2px); box-shadow:none; }
+  .diff-cell.wrong-shake{ animation: shake .3s; }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+
+  .mini-btn-row{ display:flex; gap:10px; margin-top:16px; }
+  .mini-btn-row .btn{ margin:0; }
   .btn:active{ transform: translateY(3px); box-shadow:none; }
 
   .back-btn{ border:none; background:none; font-size:20px; color: var(--plum); cursor:pointer; padding:4px 8px; }
@@ -269,6 +321,7 @@
     <div class="voice-step" id="voiceStep">
       <p class="voice-instructions">Agora fala em voz alta:</p>
       <p class="voice-target" id="voiceTarget">cat</p>
+      <p class="voice-pt" id="voicePt"></p>
       <button class="speak-btn" id="voiceSpeakBtn" style="margin-bottom:18px;">🔊</button>
       <button class="mic-btn" id="micBtn">🎤</button>
       <p class="voice-status" id="voiceStatus"></p>
@@ -284,8 +337,19 @@
     <p id="resultText">Você acertou tudo!</p>
     <div class="btn-row" id="resultBtnRow">
       <button class="btn primary" id="continueBtn">Próxima fase ▶</button>
+      <button class="btn recess" id="recessBtn">🎮 Hora do recreio</button>
       <button class="btn secondary" id="pauseBtn">Fazer uma pausa</button>
     </div>
+  </section>
+
+  <!-- MINIGAMES -->
+  <section class="screen" id="screen-minigames">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+      <button class="back-btn" id="miniBackBtn">←</button>
+      <p class="level-heading" style="flex:1; margin:0;">Hora do recreio! 🎮</p>
+    </div>
+    <div id="minigameSelect"></div>
+    <div id="minigameArea"></div>
   </section>
 
 </div>
@@ -382,28 +446,28 @@ const CATEGORIES = [
 // ---------------- PHRASE BANK (unlocked at higher difficulty) ----------------
 // tier 1: 2 words · tier 2: 3-4 words · tier 3: 5+ words
 const PHRASES = [
-  { tier:1, en:'I run', emoji:'🏃' },
-  { tier:1, en:'I jump', emoji:'🤸' },
-  { tier:1, en:'I play', emoji:'⚽' },
-  { tier:1, en:'I sing', emoji:'🎤' },
-  { tier:1, en:'I swim', emoji:'🏊' },
-  { tier:1, en:'I dance', emoji:'💃' },
-  { tier:1, en:'I walk', emoji:'🚶' },
-  { tier:1, en:'Big dog', emoji:'🐶' },
-  { tier:1, en:'Red apple', emoji:'🍎' },
-  { tier:2, en:'I am happy', emoji:'😀' },
-  { tier:2, en:'I am sad', emoji:'😢' },
-  { tier:2, en:'I am tired', emoji:'😴' },
-  { tier:2, en:'I like cats', emoji:'🐱' },
-  { tier:2, en:'I like dogs', emoji:'🐶' },
-  { tier:2, en:'I have a dog', emoji:'🐶' },
-  { tier:2, en:'I have a cat', emoji:'🐱' },
-  { tier:2, en:'I can run fast', emoji:'🏃' },
-  { tier:3, en:'I like the red apple', emoji:'🍎' },
-  { tier:3, en:'The big dog can run', emoji:'🐶' },
-  { tier:3, en:'I am very happy today', emoji:'😀' },
-  { tier:3, en:'I like to eat cake', emoji:'🍰' },
-  { tier:3, en:'My mom is very happy', emoji:'👩' },
+  { tier:1, en:'I run', pt:'Eu corro', emoji:'🏃' },
+  { tier:1, en:'I jump', pt:'Eu pulo', emoji:'🤸' },
+  { tier:1, en:'I play', pt:'Eu brinco', emoji:'⚽' },
+  { tier:1, en:'I sing', pt:'Eu canto', emoji:'🎤' },
+  { tier:1, en:'I swim', pt:'Eu nado', emoji:'🏊' },
+  { tier:1, en:'I dance', pt:'Eu danço', emoji:'💃' },
+  { tier:1, en:'I walk', pt:'Eu ando', emoji:'🚶' },
+  { tier:1, en:'Big dog', pt:'Cachorro grande', emoji:'🐶' },
+  { tier:1, en:'Red apple', pt:'Maçã vermelha', emoji:'🍎' },
+  { tier:2, en:'I am happy', pt:'Eu estou feliz', emoji:'😀' },
+  { tier:2, en:'I am sad', pt:'Eu estou triste', emoji:'😢' },
+  { tier:2, en:'I am tired', pt:'Eu estou cansada', emoji:'😴' },
+  { tier:2, en:'I like cats', pt:'Eu gosto de gatos', emoji:'🐱' },
+  { tier:2, en:'I like dogs', pt:'Eu gosto de cachorros', emoji:'🐶' },
+  { tier:2, en:'I have a dog', pt:'Eu tenho um cachorro', emoji:'🐶' },
+  { tier:2, en:'I have a cat', pt:'Eu tenho um gato', emoji:'🐱' },
+  { tier:2, en:'I can run fast', pt:'Eu consigo correr rápido', emoji:'🏃' },
+  { tier:3, en:'I like the red apple', pt:'Eu gosto da maçã vermelha', emoji:'🍎' },
+  { tier:3, en:'The big dog can run', pt:'O cachorro grande pode correr', emoji:'🐶' },
+  { tier:3, en:'I am very happy today', pt:'Eu estou muito feliz hoje', emoji:'😀' },
+  { tier:3, en:'I like to eat cake', pt:'Eu gosto de comer bolo', emoji:'🍰' },
+  { tier:3, en:'My mom is very happy', pt:'Minha mãe está muito feliz', emoji:'👩' },
 ];
 
 // ---------------- ADAPTIVE DIFFICULTY CONFIG ----------------
@@ -520,6 +584,7 @@ const screens = {
   home: document.getElementById('screen-home'),
   game: document.getElementById('screen-game'),
   result: document.getElementById('screen-result'),
+  minigames: document.getElementById('screen-minigames'),
 };
 const starCountEl = document.getElementById('starCount');
 const dayNumLabel = document.getElementById('dayNumLabel');
@@ -574,17 +639,35 @@ if('speechSynthesis' in window){
 function pickBestVoice(lang){
   const candidates = cachedVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith(lang.toLowerCase()));
   if(!candidates.length) return null;
-  const preferred = candidates.find(v => /Google|Natural|Online|Wavenet/i.test(v.name));
-  return preferred || candidates[0];
+  // Prefer higher-quality network voices — on Android, "Google" voices sound far more natural
+  // than the default on-device engine.
+  const priorityPatterns = [/Google.*Female/i, /Google/i, /Natural/i, /Wavenet/i, /Online/i, /Female/i];
+  for(const pattern of priorityPatterns){
+    const match = candidates.find(v => pattern.test(v.name));
+    if(match) return match;
+  }
+  return candidates[0];
 }
-function speak(text, rate, lang){
-  if(!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
+function speakRaw(text, rate, lang, onend){
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang || 'en-US'; u.rate = rate || 0.85; u.pitch = 1.05;
   const voice = pickBestVoice(u.lang);
   if(voice) u.voice = voice;
+  if(onend) u.onend = onend;
   window.speechSynthesis.speak(u);
+}
+function speak(text, rate, lang){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  speakRaw(text, rate, lang);
+}
+// Speaks a short Portuguese introduction first (giving context/meaning), then the English target.
+function speakWithContext(ptText, enText, enRate){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  speakRaw(`Como eu digo "${ptText}" em inglês? Assim:`, 0.95, 'pt-BR', () => {
+    setTimeout(() => speakRaw(enText, enRate, 'en-US'), 250);
+  });
 }
 
 function fmtTime(totalSeconds){
@@ -788,7 +871,13 @@ speakBtn.addEventListener('click', () => {
   if(phaseWords[roundIndex]) speak(phaseWords[roundIndex].en, currentRate);
 });
 voiceSpeakBtn.addEventListener('click', () => {
-  if(phaseWords[roundIndex]) speak(phaseWords[roundIndex].en, currentRate);
+  const current = phaseWords[roundIndex];
+  if(!current) return;
+  if(current.type === 'phrase'){
+    speakWithContext(current.pt, current.en, currentRate);
+  } else {
+    speak(current.en, currentRate);
+  }
 });
 
 function handleAnswer(isCorrect, btnEl){
@@ -823,12 +912,17 @@ function showVoiceStep(){
   voiceTarget.textContent = current.en;
 
   const instructionsEl = document.querySelector('.voice-instructions');
+  const voicePt = document.getElementById('voicePt');
   if(current.type === 'phrase'){
     instructionsEl.textContent = 'Agora repete a frase:';
     voiceHint.textContent = 'Toque no microfone e fale a frase toda';
+    voicePt.textContent = `(${current.pt})`;
+    voicePt.style.display = '';
   } else {
     instructionsEl.textContent = 'Agora fala em voz alta:';
     voiceHint.textContent = 'Toque no microfone e repita a palavra';
+    voicePt.textContent = '';
+    voicePt.style.display = 'none';
   }
 
   if(!recognition){
@@ -838,6 +932,11 @@ function showVoiceStep(){
     setTimeout(() => advanceAfterVoice(), 1400);
   } else {
     micBtn.disabled = false;
+  }
+
+  // For phrases, narrate the Portuguese meaning first so she knows what she's about to say.
+  if(current.type === 'phrase'){
+    setTimeout(() => speakWithContext(current.pt, current.en, currentRate), 400);
   }
 }
 
@@ -990,6 +1089,220 @@ function burstConfetti(){
 }
 
 document.getElementById('backBtn').addEventListener('click', () => { saveProgress(); renderHome(); });
+
+// ==================== MINIGAMES (recess break) ====================
+const MINIGAMES = [
+  { id:'ttt', name:'Jogo da Velha', emoji:'⭕', desc:'Você contra o computador' },
+  { id:'guess', name:'Adivinha a Palavra', emoji:'🔤', desc:'Descubra a palavra em inglês' },
+  { id:'diff', name:'Ache o Diferente', emoji:'🔍', desc:'Encontre o emoji diferente' },
+];
+
+const minigameSelect = document.getElementById('minigameSelect');
+const minigameArea = document.getElementById('minigameArea');
+
+document.getElementById('recessBtn').addEventListener('click', () => {
+  showScreen('minigames');
+  showMinigameSelect();
+});
+document.getElementById('miniBackBtn').addEventListener('click', () => {
+  if(minigameArea.style.display === 'none' || !minigameArea.style.display){
+    renderHome();
+  } else {
+    showMinigameSelect();
+  }
+});
+
+function showMinigameSelect(){
+  minigameArea.style.display = 'none';
+  minigameArea.innerHTML = '';
+  minigameSelect.style.display = 'block';
+  minigameSelect.innerHTML = '';
+  MINIGAMES.forEach((g) => {
+    const card = document.createElement('button');
+    card.className = 'mini-card';
+    card.innerHTML = `<span class="mc-emoji">${g.emoji}</span><span><span class="mc-title">${g.name}</span><br><span class="mc-desc">${g.desc}</span></span>`;
+    card.addEventListener('click', () => startMinigame(g.id));
+    minigameSelect.appendChild(card);
+  });
+}
+
+function startMinigame(id){
+  minigameSelect.style.display = 'none';
+  minigameArea.style.display = 'block';
+  if(id === 'ttt') renderTTT();
+  else if(id === 'guess') renderGuess();
+  else if(id === 'diff') renderDiff();
+}
+
+// ---------- Tic-Tac-Toe ----------
+function renderTTT(){
+  const board = Array(9).fill(null);
+  let gameOver = false;
+
+  minigameArea.innerHTML = `
+    <p class="mini-status" id="tttStatus">Sua vez! Toque num quadrado</p>
+    <div class="ttt-board" id="tttBoard"></div>
+    <div class="mini-btn-row"><button class="btn secondary" id="tttRestart">Jogar de novo</button></div>
+  `;
+  const boardEl = document.getElementById('tttBoard');
+  const statusEl = document.getElementById('tttStatus');
+
+  const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  function checkWinner(b){
+    for(const [a,c,d] of wins){ if(b[a] && b[a]===b[c] && b[a]===b[d]) return b[a]; }
+    return b.every(x => x) ? 'draw' : null;
+  }
+  function cpuMove(){
+    const empties = board.map((v,i)=>v?null:i).filter(v=>v!==null);
+    // try to win
+    for(const i of empties){ const copy=[...board]; copy[i]='🐱'; if(checkWinner(copy)==='🐱') return i; }
+    // try to block
+    for(const i of empties){ const copy=[...board]; copy[i]='🦜'; if(checkWinner(copy)==='🦜') return i; }
+    if(!board[4]) return 4;
+    return empties[Math.floor(Math.random()*empties.length)];
+  }
+  function draw(){
+    boardEl.innerHTML = '';
+    board.forEach((val, i) => {
+      const b = document.createElement('button');
+      b.className = 'ttt-cell';
+      b.textContent = val || '';
+      b.disabled = !!val || gameOver;
+      b.addEventListener('click', () => playerMove(i));
+      boardEl.appendChild(b);
+    });
+  }
+  function playerMove(i){
+    if(board[i] || gameOver) return;
+    board[i] = '🦜';
+    let winner = checkWinner(board);
+    if(!winner){
+      const cpuI = cpuMove();
+      if(cpuI !== undefined) board[cpuI] = '🐱';
+      winner = checkWinner(board);
+    }
+    draw();
+    if(winner){
+      gameOver = true;
+      if(winner === '🦜'){ statusEl.textContent = 'Você ganhou! 🎉'; burstConfetti(); }
+      else if(winner === '🐱'){ statusEl.textContent = 'Foi dessa vez o computador! Tenta de novo 🙂'; }
+      else statusEl.textContent = 'Empate! 🤝';
+    } else {
+      statusEl.textContent = 'Sua vez! Toque num quadrado';
+    }
+  }
+  document.getElementById('tttRestart').addEventListener('click', renderTTT);
+  draw();
+}
+
+// ---------- Word Guess (friendly hangman) ----------
+const GUESS_MOODS = ['☀️','🌤️','⛅','🌥️','☁️','🌧️'];
+function renderGuess(){
+  const pool = CATEGORIES.flatMap(c => c.words).filter(w => /^[a-z]+$/.test(w.en) && w.en.length >= 3 && w.en.length <= 8);
+  const secret = pool[Math.floor(Math.random()*pool.length)];
+  const letters = secret.en.split('');
+  const guessed = new Set();
+  let wrongCount = 0;
+  const MAX_WRONG = GUESS_MOODS.length - 1;
+
+  minigameArea.innerHTML = `
+    <p class="guess-mood" id="guessMood">${GUESS_MOODS[0]}</p>
+    <p class="mini-status" id="guessStatus">Adivinhe a palavra!</p>
+    <div class="guess-word" id="guessWord"></div>
+    <div class="guess-keyboard" id="guessKeyboard"></div>
+    <div class="mini-btn-row"><button class="btn secondary" id="guessRestart">Nova palavra</button></div>
+  `;
+  const wordEl = document.getElementById('guessWord');
+  const kbEl = document.getElementById('guessKeyboard');
+  const statusEl = document.getElementById('guessStatus');
+  const moodEl = document.getElementById('guessMood');
+
+  function drawWord(){
+    wordEl.innerHTML = '';
+    letters.forEach(ch => {
+      const slot = document.createElement('div');
+      slot.className = 'guess-letter-slot';
+      slot.textContent = guessed.has(ch) ? ch.toUpperCase() : '';
+      wordEl.appendChild(slot);
+    });
+  }
+  function drawKeyboard(){
+    kbEl.innerHTML = '';
+    'abcdefghijklmnopqrstuvwxyz'.split('').forEach(ch => {
+      const btn = document.createElement('button');
+      btn.className = 'guess-key';
+      btn.textContent = ch.toUpperCase();
+      btn.addEventListener('click', () => handleGuess(ch, btn));
+      kbEl.appendChild(btn);
+    });
+  }
+  function handleGuess(ch, btn){
+    btn.classList.add('used');
+    btn.disabled = true;
+    if(letters.includes(ch)){
+      guessed.add(ch);
+      drawWord();
+      if(letters.every(l => guessed.has(l))){
+        statusEl.textContent = `Isso! A palavra era "${secret.en}" ${secret.emoji}`;
+        speak(secret.en, 0.85);
+        burstConfetti();
+        Array.from(kbEl.children).forEach(k => k.disabled = true);
+      }
+    } else {
+      wrongCount++;
+      moodEl.textContent = GUESS_MOODS[Math.min(wrongCount, MAX_WRONG)];
+      if(wrongCount >= MAX_WRONG){
+        statusEl.textContent = `Quase! A palavra era "${secret.en}" ${secret.emoji}`;
+        Array.from(kbEl.children).forEach(k => k.disabled = true);
+      }
+    }
+  }
+  document.getElementById('guessRestart').addEventListener('click', renderGuess);
+  drawWord();
+  drawKeyboard();
+}
+
+// ---------- Find the Different One ----------
+function renderDiff(){
+  const allWords = CATEGORIES.flatMap(c => c.words);
+  function newRound(){
+    const a = allWords[Math.floor(Math.random()*allWords.length)];
+    let b = allWords[Math.floor(Math.random()*allWords.length)];
+    while(b.emoji === a.emoji) b = allWords[Math.floor(Math.random()*allWords.length)];
+    const oddIndex = Math.floor(Math.random()*9);
+    const grid = Array.from({length:9}, (_, i) => i === oddIndex ? b.emoji : a.emoji);
+    return { grid, oddIndex };
+  }
+  let round = newRound();
+
+  minigameArea.innerHTML = `
+    <p class="mini-status" id="diffStatus">Toque no emoji diferente!</p>
+    <div class="diff-grid" id="diffGrid"></div>
+  `;
+  const gridEl = document.getElementById('diffGrid');
+  const statusEl = document.getElementById('diffStatus');
+
+  function draw(){
+    gridEl.innerHTML = '';
+    round.grid.forEach((emoji, i) => {
+      const b = document.createElement('button');
+      b.className = 'diff-cell';
+      b.textContent = emoji;
+      b.addEventListener('click', () => {
+        if(i === round.oddIndex){
+          statusEl.textContent = 'Muito bem! Encontrou! 🎉';
+          burstConfetti();
+          setTimeout(() => { round = newRound(); statusEl.textContent = 'Toque no emoji diferente!'; draw(); }, 1300);
+        } else {
+          b.classList.add('wrong-shake');
+          setTimeout(() => b.classList.remove('wrong-shake'), 300);
+        }
+      });
+      gridEl.appendChild(b);
+    });
+  }
+  draw();
+}
 
 // ---------------- INIT ----------------
 loadProgress();
