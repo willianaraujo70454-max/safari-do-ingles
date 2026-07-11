@@ -224,18 +224,19 @@
   .guess-key:active{ transform: translateY(2px); box-shadow:none; }
   .guess-key.used{ opacity:.35; pointer-events:none; }
 
-  /* FIND THE DIFFERENT */
-  .diff-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; max-width:280px; margin:20px auto; }
-  .diff-cell{
-    aspect-ratio:1; border-radius:16px; background:var(--white); box-shadow:var(--shadow);
-    border:none; font-size:38px; display:flex; align-items:center; justify-content:center; cursor:pointer;
-  }
-  .diff-cell:active{ transform: translateY(2px); box-shadow:none; }
-  .diff-cell.wrong-shake{ animation: shake .3s; }
-  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
-
   .mini-btn-row{ display:flex; gap:10px; margin-top:16px; }
   .mini-btn-row .btn{ margin:0; }
+
+  /* MEMORY GAME */
+  .memory-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap:8px; max-width:340px; margin:16px auto 0; }
+  .memory-card{
+    aspect-ratio:1; border-radius:12px; border:none; background: var(--sky); color:white;
+    font-size:26px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow: var(--shadow);
+  }
+  .memory-card:active{ transform: translateY(2px); box-shadow:none; }
+  .memory-card.flipped{ background:var(--white); color:var(--plum); }
+  .memory-card.matched{ background:#EAFBF2; color:var(--plum); border:3px solid var(--leaf); }
   .btn:active{ transform: translateY(3px); box-shadow:none; }
 
   .back-btn{ border:none; background:none; font-size:20px; color: var(--plum); cursor:pointer; padding:4px 8px; }
@@ -1118,8 +1119,26 @@ document.getElementById('backBtn').addEventListener('click', () => { saveProgres
 const MINIGAMES = [
   { id:'ttt', name:'Jogo da Velha', emoji:'⭕', desc:'Você contra o computador' },
   { id:'guess', name:'Adivinha a Palavra', emoji:'🔤', desc:'Descubra a palavra em inglês' },
-  { id:'diff', name:'Ache o Diferente', emoji:'🔍', desc:'Encontre o emoji diferente' },
+  { id:'memory', name:'Jogo da Memória', emoji:'🃏', desc:'Encontre os pares iguais' },
 ];
+const RECESS_LIMIT = 2;
+let recessMatchesPlayed = 0;
+
+// Call this whenever a match/round finishes in any minigame.
+// Returns true if she can keep playing, false if the recess limit was reached
+// (in which case it also shows a message and sends her back to the English activities).
+function registerRecessMatch(){
+  recessMatchesPlayed++;
+  const remaining = RECESS_LIMIT - recessMatchesPlayed;
+  if(remaining <= 0){
+    setTimeout(() => {
+      minigameArea.innerHTML = `<p class="mini-status">Recreio acabou por hoje! 📚<br>Voltando pro inglês...</p>`;
+      setTimeout(() => renderHome(), 1800);
+    }, 1300);
+    return false;
+  }
+  return true;
+}
 
 const minigameSelect = document.getElementById('minigameSelect');
 const minigameArea = document.getElementById('minigameArea');
@@ -1141,10 +1160,11 @@ document.getElementById('miniBackBtn').addEventListener('click', () => {
 });
 
 function showMinigameSelect(){
+  recessMatchesPlayed = 0;
   minigameArea.style.display = 'none';
   minigameArea.innerHTML = '';
   minigameSelect.style.display = 'block';
-  minigameSelect.innerHTML = '';
+  minigameSelect.innerHTML = `<p class="next-unlock-note" style="margin-bottom:12px;">Você pode jogar até ${RECESS_LIMIT} partidas antes de voltar pro inglês 📚</p>`;
   MINIGAMES.forEach((g) => {
     const card = document.createElement('button');
     card.className = 'mini-card';
@@ -1159,7 +1179,7 @@ function startMinigame(id){
   minigameArea.style.display = 'block';
   if(id === 'ttt') renderTTT();
   else if(id === 'guess') renderGuess();
-  else if(id === 'diff') renderDiff();
+  else if(id === 'memory') renderMemory();
 }
 
 // ---------- Tic-Tac-Toe ----------
@@ -1182,11 +1202,17 @@ function renderTTT(){
   }
   function cpuMove(){
     const empties = board.map((v,i)=>v?null:i).filter(v=>v!==null);
-    // try to win
-    for(const i of empties){ const copy=[...board]; copy[i]='🐱'; if(checkWinner(copy)==='🐱') return i; }
-    // try to block
-    for(const i of empties){ const copy=[...board]; copy[i]='🦜'; if(checkWinner(copy)==='🦜') return i; }
-    if(!board[4]) return 4;
+    // Play "smart" only some of the time so a 6-year-old has a real chance to win.
+    const playSmart = Math.random() < 0.4;
+    if(playSmart){
+      // try to win
+      for(const i of empties){ const copy=[...board]; copy[i]='🐱'; if(checkWinner(copy)==='🐱') return i; }
+      // try to block
+      for(const i of empties){ const copy=[...board]; copy[i]='🦜'; if(checkWinner(copy)==='🦜') return i; }
+    } else {
+      // Still avoid handing over an instant loss most of the time, but otherwise play randomly.
+      for(const i of empties){ const copy=[...board]; copy[i]='🦜'; if(checkWinner(copy)==='🦜' && Math.random()<0.5) return i; }
+    }
     return empties[Math.floor(Math.random()*empties.length)];
   }
   function draw(){
@@ -1215,6 +1241,13 @@ function renderTTT(){
       if(winner === '🦜'){ statusEl.textContent = 'Você ganhou! 🎉'; burstConfetti(); }
       else if(winner === '🐱'){ statusEl.textContent = 'Foi dessa vez o computador! Tenta de novo 🙂'; }
       else statusEl.textContent = 'Empate! 🤝';
+      const canContinue = registerRecessMatch();
+      const restartBtn = document.getElementById('tttRestart');
+      if(canContinue){
+        restartBtn.textContent = `Jogar de novo (partida ${recessMatchesPlayed+1} de ${RECESS_LIMIT})`;
+      } else {
+        restartBtn.remove();
+      }
     } else {
       statusEl.textContent = 'Sua vez! Toque num quadrado';
     }
@@ -1224,9 +1257,9 @@ function renderTTT(){
 }
 
 // ---------- Word Guess (friendly hangman) ----------
-const GUESS_MOODS = ['☀️','🌤️','⛅','🌥️','☁️','🌧️'];
+const GUESS_MOODS = ['☀️','🌤️','⛅','🌥️','☁️','🌧️','⛈️'];
 function renderGuess(){
-  const pool = CATEGORIES.flatMap(c => c.words).filter(w => /^[a-z]+$/.test(w.en) && w.en.length >= 3 && w.en.length <= 8);
+  const pool = CATEGORIES.flatMap(c => c.words).filter(w => /^[a-z]+$/.test(w.en) && w.en.length >= 3 && w.en.length <= 5);
   const secret = pool[Math.floor(Math.random()*pool.length)];
   const letters = secret.en.split('');
   const guessed = new Set();
@@ -1234,8 +1267,9 @@ function renderGuess(){
   const MAX_WRONG = GUESS_MOODS.length - 1;
 
   minigameArea.innerHTML = `
-    <p class="guess-mood" id="guessMood">${GUESS_MOODS[0]}</p>
-    <p class="mini-status" id="guessStatus">Adivinhe a palavra!</p>
+    <p class="guess-hint" id="guessHint" style="font-size:56px; text-align:center; margin:10px 0 0;">${secret.emoji}</p>
+    <p class="guess-mood" id="guessMood" style="font-size:22px;">${GUESS_MOODS[0]}</p>
+    <p class="mini-status" id="guessStatus">Adivinhe a palavra! (dica: a figura ajuda 😉)</p>
     <div class="guess-word" id="guessWord"></div>
     <div class="guess-keyboard" id="guessKeyboard"></div>
     <div class="mini-btn-row"><button class="btn secondary" id="guessRestart">Nova palavra</button></div>
@@ -1275,6 +1309,7 @@ function renderGuess(){
         speak(secret.en, 0.85);
         burstConfetti();
         Array.from(kbEl.children).forEach(k => k.disabled = true);
+        finishGuessMatch();
       }
     } else {
       wrongCount++;
@@ -1282,7 +1317,17 @@ function renderGuess(){
       if(wrongCount >= MAX_WRONG){
         statusEl.textContent = `Quase! A palavra era "${secret.en}" ${secret.emoji}`;
         Array.from(kbEl.children).forEach(k => k.disabled = true);
+        finishGuessMatch();
       }
+    }
+  }
+  function finishGuessMatch(){
+    const canContinue = registerRecessMatch();
+    const restartBtn = document.getElementById('guessRestart');
+    if(canContinue){
+      restartBtn.textContent = `Nova palavra (partida ${recessMatchesPlayed+1} de ${RECESS_LIMIT})`;
+    } else {
+      restartBtn.remove();
     }
   }
   document.getElementById('guessRestart').addEventListener('click', renderGuess);
@@ -1290,44 +1335,84 @@ function renderGuess(){
   drawKeyboard();
 }
 
-// ---------- Find the Different One ----------
-function renderDiff(){
+function shuffleArr(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+// ---------- Memory Game (Jogo da Memória) ----------
+const MEMORY_PAIR_COUNT = 6;
+
+function buildMemoryDeck(){
   const allWords = CATEGORIES.flatMap(c => c.words);
-  function newRound(){
-    const a = allWords[Math.floor(Math.random()*allWords.length)];
-    let b = allWords[Math.floor(Math.random()*allWords.length)];
-    while(b.emoji === a.emoji) b = allWords[Math.floor(Math.random()*allWords.length)];
-    const oddIndex = Math.floor(Math.random()*9);
-    const grid = Array.from({length:9}, (_, i) => i === oddIndex ? b.emoji : a.emoji);
-    return { grid, oddIndex };
-  }
-  let round = newRound();
+  const chosen = shuffleArr(allWords).slice(0, MEMORY_PAIR_COUNT);
+  const pairs = chosen.flatMap((w) => [{en:w.en, emoji:w.emoji}, {en:w.en, emoji:w.emoji}]);
+  return shuffleArr(pairs).map((card, i) => ({...card, uid:i}));
+}
+
+function renderMemory(){
+  let deck = buildMemoryDeck();
+  let flippedUids = [];
+  let matchedUids = new Set();
+  let locked = false;
 
   minigameArea.innerHTML = `
-    <p class="mini-status" id="diffStatus">Toque no emoji diferente!</p>
-    <div class="diff-grid" id="diffGrid"></div>
+    <p class="mini-status" id="memoryStatus">Encontre os pares iguais!</p>
+    <div class="memory-grid" id="memoryGrid"></div>
   `;
-  const gridEl = document.getElementById('diffGrid');
-  const statusEl = document.getElementById('diffStatus');
+  const statusEl = document.getElementById('memoryStatus');
+  const gridEl = document.getElementById('memoryGrid');
 
   function draw(){
     gridEl.innerHTML = '';
-    round.grid.forEach((emoji, i) => {
-      const b = document.createElement('button');
-      b.className = 'diff-cell';
-      b.textContent = emoji;
-      b.addEventListener('click', () => {
-        if(i === round.oddIndex){
-          statusEl.textContent = 'Muito bem! Encontrou! 🎉';
-          burstConfetti();
-          setTimeout(() => { round = newRound(); statusEl.textContent = 'Toque no emoji diferente!'; draw(); }, 1300);
-        } else {
-          b.classList.add('wrong-shake');
-          setTimeout(() => b.classList.remove('wrong-shake'), 300);
-        }
-      });
-      gridEl.appendChild(b);
+    deck.forEach((card) => {
+      const btn = document.createElement('button');
+      const isUp = matchedUids.has(card.uid) || flippedUids.includes(card.uid);
+      btn.className = 'memory-card' + (matchedUids.has(card.uid) ? ' matched' : isUp ? ' flipped' : '');
+      btn.textContent = isUp ? card.emoji : '🦜';
+      btn.addEventListener('click', () => handleTap(card, btn));
+      gridEl.appendChild(btn);
     });
+  }
+  function handleTap(card, btn){
+    if(locked || matchedUids.has(card.uid) || flippedUids.includes(card.uid)) return;
+    flippedUids.push(card.uid);
+    draw();
+    if(flippedUids.length === 2){
+      const [aUid, bUid] = flippedUids;
+      const a = deck.find(c => c.uid === aUid);
+      const b = deck.find(c => c.uid === bUid);
+      if(a.en === b.en){
+        matchedUids.add(aUid); matchedUids.add(bUid);
+        flippedUids = [];
+        draw();
+        statusEl.textContent = `Encontrados: ${matchedUids.size/2} de ${MEMORY_PAIR_COUNT}`;
+        if(matchedUids.size === deck.length){
+          burstConfetti();
+          const canContinue = registerRecessMatch();
+          if(canContinue){
+            statusEl.textContent = `Muito bem! Nova rodada (partida ${recessMatchesPlayed+1} de ${RECESS_LIMIT})`;
+            setTimeout(() => {
+              deck = buildMemoryDeck();
+              matchedUids = new Set();
+              flippedUids = [];
+              statusEl.textContent = 'Encontre os pares iguais!';
+              draw();
+            }, 1600);
+          } else {
+            statusEl.textContent = 'Você achou todos os pares! 🎉';
+          }
+        }
+      } else {
+        locked = true;
+        setTimeout(() => {
+          flippedUids = [];
+          locked = false;
+          draw();
+        }, 900);
+      }
+    }
   }
   draw();
 }
