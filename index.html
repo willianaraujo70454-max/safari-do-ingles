@@ -450,6 +450,7 @@ const CATEGORIES = [
 // ---------------- PHRASE BANK (unlocked at higher difficulty) ----------------
 // tier 1: 2 words · tier 2: 3-4 words · tier 3: 5+ words
 const PHRASES = [
+  // tier 1 — 2 words
   { tier:1, en:'I run', pt:'Eu corro', emoji:'🏃' },
   { tier:1, en:'I jump', pt:'Eu pulo', emoji:'🤸' },
   { tier:1, en:'I play', pt:'Eu brinco', emoji:'⚽' },
@@ -457,22 +458,55 @@ const PHRASES = [
   { tier:1, en:'I swim', pt:'Eu nado', emoji:'🏊' },
   { tier:1, en:'I dance', pt:'Eu danço', emoji:'💃' },
   { tier:1, en:'I walk', pt:'Eu ando', emoji:'🚶' },
+  { tier:1, en:'I eat', pt:'Eu como', emoji:'🍽️' },
+  { tier:1, en:'I drink', pt:'Eu bebo', emoji:'🥤' },
+  { tier:1, en:'I sleep', pt:'Eu durmo', emoji:'🛌' },
   { tier:1, en:'Big dog', pt:'Cachorro grande', emoji:'🐶' },
   { tier:1, en:'Red apple', pt:'Maçã vermelha', emoji:'🍎' },
+  { tier:1, en:'Red bird', pt:'Pássaro vermelho', emoji:'🦜' },
+  { tier:1, en:'Blue fish', pt:'Peixe azul', emoji:'🐟' },
+  { tier:1, en:'Yellow lion', pt:'Leão amarelo', emoji:'🦁' },
+  { tier:1, en:'Green monkey', pt:'Macaco verde', emoji:'🐒' },
+  { tier:1, en:'Purple elephant', pt:'Elefante roxo', emoji:'🐘' },
+  { tier:1, en:'Orange rabbit', pt:'Coelho laranja', emoji:'🐰' },
+
+  // tier 2 — 3-4 words
   { tier:2, en:'I am happy', pt:'Eu estou feliz', emoji:'😀' },
   { tier:2, en:'I am sad', pt:'Eu estou triste', emoji:'😢' },
   { tier:2, en:'I am tired', pt:'Eu estou cansada', emoji:'😴' },
+  { tier:2, en:'I am angry', pt:'Eu estou brava', emoji:'😠' },
+  { tier:2, en:'I am scared', pt:'Eu estou assustada', emoji:'😱' },
+  { tier:2, en:'I am surprised', pt:'Eu estou surpresa', emoji:'😲' },
   { tier:2, en:'I like cats', pt:'Eu gosto de gatos', emoji:'🐱' },
   { tier:2, en:'I like dogs', pt:'Eu gosto de cachorros', emoji:'🐶' },
+  { tier:2, en:'I like birds', pt:'Eu gosto de pássaros', emoji:'🦜' },
+  { tier:2, en:'I like fish', pt:'Eu gosto de peixes', emoji:'🐟' },
   { tier:2, en:'I have a dog', pt:'Eu tenho um cachorro', emoji:'🐶' },
   { tier:2, en:'I have a cat', pt:'Eu tenho um gato', emoji:'🐱' },
+  { tier:2, en:'I have a bird', pt:'Eu tenho um pássaro', emoji:'🦜' },
+  { tier:2, en:'I have a rabbit', pt:'Eu tenho um coelho', emoji:'🐰' },
   { tier:2, en:'I can run fast', pt:'Eu consigo correr rápido', emoji:'🏃' },
+  { tier:2, en:'I can swim well', pt:'Eu consigo nadar bem', emoji:'🏊' },
+  { tier:2, en:'I can sing well', pt:'Eu consigo cantar bem', emoji:'🎤' },
+  { tier:2, en:'I can jump high', pt:'Eu consigo pular alto', emoji:'🤸' },
+  { tier:2, en:'My mom is happy', pt:'Minha mãe está feliz', emoji:'👩' },
+  { tier:2, en:'My dad is tired', pt:'Meu pai está cansado', emoji:'👨' },
+
+  // tier 3 — 5+ words
   { tier:3, en:'I like the red apple', pt:'Eu gosto da maçã vermelha', emoji:'🍎' },
   { tier:3, en:'The big dog can run', pt:'O cachorro grande pode correr', emoji:'🐶' },
   { tier:3, en:'I am very happy today', pt:'Eu estou muito feliz hoje', emoji:'😀' },
   { tier:3, en:'I like to eat cake', pt:'Eu gosto de comer bolo', emoji:'🍰' },
   { tier:3, en:'My mom is very happy', pt:'Minha mãe está muito feliz', emoji:'👩' },
+  { tier:3, en:'I like the yellow sun', pt:'Eu gosto do sol amarelo', emoji:'☀️' },
+  { tier:3, en:'The small cat can jump', pt:'O gato pequeno pode pular', emoji:'🐱' },
+  { tier:3, en:'I like to drink milk', pt:'Eu gosto de beber leite', emoji:'🥛' },
+  { tier:3, en:'My sister can sing well', pt:'Minha irmã consegue cantar bem', emoji:'👧' },
+  { tier:3, en:'I have a happy dog', pt:'Eu tenho um cachorro feliz', emoji:'🐶' },
+  { tier:3, en:'I like the blue fish', pt:'Eu gosto do peixe azul', emoji:'🐟' },
 ];
+
+
 
 // ---------------- ADAPTIVE DIFFICULTY CONFIG ----------------
 const PHASE_WORD_COUNT = 6;
@@ -903,7 +937,9 @@ speakBtn.addEventListener('click', () => {
 voiceSpeakBtn.addEventListener('click', () => {
   const current = phaseWords[roundIndex];
   if(!current) return;
-  speakWithContext(current.pt, current.en, currentRate);
+  // The Portuguese context intro already played once automatically when this word/phrase appeared.
+  // The repeat button from here on only replays the English target, so retries are quick.
+  speak(current.en, currentRate);
 });
 
 function handleAnswer(isCorrect, btnEl){
