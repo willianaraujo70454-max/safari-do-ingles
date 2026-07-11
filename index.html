@@ -115,6 +115,21 @@
   }
 
   /* WEEKLY SUMMARY */
+  /* MATCH GAME (connect the dots) */
+  .match-wrap{ position:relative; display:flex; justify-content:space-between; gap:16px; padding:6px 0; }
+  .match-svg{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .match-col{ display:flex; flex-direction:column; gap:12px; flex:1; z-index:1; }
+  .match-item{
+    border:3px solid #EFE3C8; background:var(--white); border-radius:16px; padding:14px 10px;
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:16px; color:var(--plum);
+    cursor:pointer; text-align:center; box-shadow: var(--shadow);
+  }
+  .match-item.emoji-item{ font-size:32px; padding:10px; }
+  .match-item.selected{ border-color: var(--sky); background:#EAF7FF; }
+  .match-item.matched{ border-color: var(--leaf); background:#EAFBF2; opacity:.85; cursor:default; }
+  .match-item.wrong-shake{ animation: shake .3s; }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);} }
+
   .weekly-stat-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:16px; }
   .weekly-stat-card{
     background: var(--white); border-radius:18px; padding:16px; text-align:center; box-shadow: var(--shadow);
@@ -379,6 +394,7 @@
 
       <button class="cta-btn" id="playTodayBtn">Começar a jogar ▶</button>
       <button class="cta-btn recess" id="homeRecessBtn" style="margin-top:8px;">🎮 Hora do recreio</button>
+      <button class="cta-btn" id="matchGameBtn" style="display:none; margin-top:8px; background:var(--leaf); box-shadow:0 5px 0 rgba(30,120,75,0.4);">🔗 Ligar as palavras</button>
     </div>
 
     <div id="badgesRow" style="display:none;"></div>
@@ -464,6 +480,21 @@
     <div class="btn-row">
       <button class="btn primary" id="placementStartJourneyBtn">Começar jornada ▶</button>
     </div>
+  </section>
+
+  <!-- MATCH GAME (connect the dots: word <-> picture) -->
+  <section class="screen" id="screen-match">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <button class="back-btn" id="matchBackBtn">←</button>
+      <p class="level-heading" style="flex:1; margin:0;">Ligar as palavras</p>
+    </div>
+    <p class="mini-status" id="matchStatus">Toque numa palavra e depois na imagem certa!</p>
+    <div class="match-wrap" id="matchWrap">
+      <svg id="matchSvg" class="match-svg"></svg>
+      <div class="match-col" id="matchWordsCol"></div>
+      <div class="match-col" id="matchEmojisCol"></div>
+    </div>
+    <div class="mini-btn-row"><button class="btn secondary" id="matchNewRoundBtn">Novo grupo de palavras</button></div>
   </section>
 
   <!-- WEEKLY SUMMARY -->
@@ -693,6 +724,16 @@ const PHRASES = [
   { tier:3, en:'My sister can sing well', pt:'Minha irmã consegue cantar bem', emoji:'🎤', key:'sing' },
   { tier:3, en:'I have a happy dog', pt:'Eu tenho um cachorro feliz', emoji:'🐶', key:'dog' },
   { tier:3, en:'I like the blue fish', pt:'Eu gosto do peixe azul', emoji:'🐟', key:'fish' },
+
+  // tier 4 — 6+ words, hardest level (also requires typing the FULL phrase)
+  { tier:4, en:'I like to play with my dog', pt:'Eu gosto de brincar com meu cachorro', emoji:'🐶', key:'dog' },
+  { tier:4, en:'My sister likes to eat cake', pt:'Minha irmã gosta de comer bolo', emoji:'🍰', key:'cake' },
+  { tier:4, en:'The happy dog can run fast', pt:'O cachorro feliz pode correr rápido', emoji:'🏃', key:'run' },
+  { tier:4, en:'I like to drink cold milk', pt:'Eu gosto de beber leite gelado', emoji:'🥛', key:'milk' },
+  { tier:4, en:'My mom likes the yellow sun', pt:'Minha mãe gosta do sol amarelo', emoji:'☀️', key:'sun' },
+  { tier:4, en:'The small cat likes to sleep', pt:'O gato pequeno gosta de dormir', emoji:'🛌', key:'sleep' },
+  { tier:4, en:'I have a big happy dog', pt:'Eu tenho um cachorro grande e feliz', emoji:'🐶', key:'dog' },
+  { tier:4, en:'My dad can sing very well', pt:'Meu pai consegue cantar muito bem', emoji:'🎤', key:'sing' },
 ];
 
 
@@ -700,12 +741,12 @@ const PHRASES = [
 // ---------------- ADAPTIVE DIFFICULTY CONFIG ----------------
 const PHASE_WORD_COUNT = 6;
 const MIN_DIFFICULTY = 2;
-const MAX_DIFFICULTY = 6;
+const MAX_DIFFICULTY = 7;
 const PHRASE_START_DIFFICULTY = 4; // from this difficulty level onward, phases use phrases instead of single words
 const MAX_VOICE_ATTEMPTS = 3;
 const STORAGE_KEY = 'safariEnglishProgress';
 const SETTINGS_KEY = 'safariEnglishSettings';
-const DIFF_LABELS = { 2:'Básico', 3:'Básico', 4:'Intermediário', 5:'Intermediário', 6:'Avançado' };
+const DIFF_LABELS = { 2:'Básico', 3:'Básico', 4:'Intermediário', 5:'Intermediário', 6:'Avançado', 7:'Avançado+' };
 const LEVEL_KEY_BY_DIFFICULTY = (d) => d <= 3 ? 'basico' : d <= 5 ? 'intermediario' : 'avancado';
 
 function getWordSpeechRate(difficultyLevel){
@@ -883,6 +924,7 @@ const screens = {
   placementIntro: document.getElementById('screen-placement-intro'),
   placementQuiz: document.getElementById('screen-placement-quiz'),
   placementResult: document.getElementById('screen-placement-result'),
+  match: document.getElementById('screen-match'),
 };
 const starCountEl = document.getElementById('starCount');
 const dayNumLabel = document.getElementById('dayNumLabel');
@@ -1026,7 +1068,7 @@ function determinePhaseMode(difficultyLevel){
   return difficultyLevel >= PHRASE_START_DIFFICULTY ? 'phrase' : 'word';
 }
 function determinePhaseTier(difficultyLevel){
-  return Math.min(3, Math.max(1, difficultyLevel - PHRASE_START_DIFFICULTY + 1));
+  return Math.min(4, Math.max(1, difficultyLevel - PHRASE_START_DIFFICULTY + 1));
 }
 
 // ---------------- HOME SCREEN ----------------
@@ -1052,6 +1094,9 @@ function renderHome(){
   streakPillWrap.innerHTML = streak > 0 ? `<div class="streak-pill">🔥 ${streak} dia${streak>1?'s':''} seguido${streak>1?'s':''}</div>` : '';
 
   playTodayBtn.textContent = progress.phaseNumber > 1 || seconds > 0 ? 'Continuar jogando ▶' : 'Começar a jogar ▶';
+
+  const matchGameBtn = document.getElementById('matchGameBtn');
+  matchGameBtn.style.display = LEVEL_KEY_BY_DIFFICULTY(progress.difficultyLevel) === 'basico' ? 'block' : 'none';
 
   unlockedGrid.innerHTML = '';
   CATEGORIES.slice(0, unlockedCount).forEach((cat) => {
@@ -1258,6 +1303,24 @@ function updateProgress(){
   });
 }
 
+function canUseVoiceStep(){
+  return !!recognition && navigator.onLine;
+}
+
+// When offline (or no speech recognition support), skip the spoken step entirely —
+// go straight from the picture/tap step to writing (phrases) or to the next word (single words).
+function completeItemWithoutVoice(){
+  const current = phaseWords[roundIndex];
+  if(current.type === 'phrase'){
+    roundCorrectFirstTry++; // count it as passed since speaking wasn't available this time
+    showTypeStep(current);
+  } else {
+    if(!triedWrongThisWord) roundCorrectFirstTry++;
+    roundIndex++;
+    loadWord();
+  }
+}
+
 function loadWord(){
   if(roundIndex >= phaseWords.length){
     finishPhase();
@@ -1272,7 +1335,11 @@ function loadWord(){
   const current = phaseWords[roundIndex];
 
   if(current.type === 'phrase'){
-    showVoiceStep();
+    if(canUseVoiceStep()){
+      showVoiceStep();
+    } else {
+      completeItemWithoutVoice();
+    }
     return;
   }
 
@@ -1338,7 +1405,10 @@ function handleAnswer(isCorrect, btnEl){
       playSuccessSound();
       vibrateSuccess();
     }
-    setTimeout(() => { showVoiceStep(); }, 900);
+    setTimeout(() => {
+      if(canUseVoiceStep()) showVoiceStep();
+      else completeItemWithoutVoice();
+    }, 900);
   } else {
     btnEl.classList.add('wrong');
     btnEl.disabled = true;
@@ -1507,20 +1577,28 @@ function advanceAfterVoice(){
 
 // ---------------- TYPE STEP (spelling, phrases only) ----------------
 const MAX_TYPE_ATTEMPTS = 3;
-let typingTarget = '';
+let typingTarget = '';       // flat string of letters (no spaces) she needs to type, in order
+let typingWordLengths = [];  // length of each word, for visual grouping of the slots
 let typingBuffer = '';
 let typingAttempts = 0;
 
-function getPhraseKeyWord(current){
-  // Prefer the explicit key field (guaranteed to match the shown emoji).
-  if(current.key) return current.key.toLowerCase().replace(/[^a-z]/g, '');
-  const words = current.en.trim().split(' ');
-  return words[words.length - 1].toLowerCase().replace(/[^a-z]/g, '');
+function getTypingWords(current){
+  // At the hardest tier (4), she spells the WHOLE phrase, word by word.
+  // Otherwise, just the single key word that matches the emoji shown.
+  if(current.tier === 4){
+    return current.en.trim().split(' ').map((w) => w.toLowerCase().replace(/[^a-z]/g, '')).filter(Boolean);
+  }
+  const key = current.key
+    ? current.key.toLowerCase().replace(/[^a-z]/g, '')
+    : current.en.trim().split(' ').pop().toLowerCase().replace(/[^a-z]/g, '');
+  return [key];
 }
 
 function showTypeStep(current){
   voiceStep.classList.remove('active');
-  typingTarget = getPhraseKeyWord(current);
+  const words = getTypingWords(current);
+  typingWordLengths = words.map((w) => w.length);
+  typingTarget = words.join('');
   typingBuffer = typingTarget[0] || ''; // first letter pre-filled as a scaffold
   typingAttempts = 0;
   document.getElementById('typeHint').textContent = current.emoji || '';
@@ -1534,12 +1612,21 @@ function showTypeStep(current){
 function drawTypeSlots(){
   const wrap = document.getElementById('typeSlots');
   wrap.innerHTML = '';
-  for(let i = 0; i < typingTarget.length; i++){
-    const slot = document.createElement('div');
-    slot.className = 'guess-letter-slot';
-    slot.textContent = (typingBuffer[i] || '').toUpperCase();
-    wrap.appendChild(slot);
-  }
+  let letterIndex = 0;
+  typingWordLengths.forEach((wordLen, wi) => {
+    if(wi > 0){
+      const gap = document.createElement('div');
+      gap.style.width = '10px';
+      wrap.appendChild(gap);
+    }
+    for(let i = 0; i < wordLen; i++){
+      const slot = document.createElement('div');
+      slot.className = 'guess-letter-slot';
+      slot.textContent = (typingBuffer[letterIndex] || '').toUpperCase();
+      wrap.appendChild(slot);
+      letterIndex++;
+    }
+  });
 }
 function drawTypeKeyboard(){
   const kb = document.getElementById('typeKeyboard');
@@ -1582,7 +1669,7 @@ function checkTyping(){
     playErrorSound();
     vibrateError();
     if(typingAttempts >= MAX_TYPE_ATTEMPTS){
-      statusEl.textContent = `Quase! A palavra era "${typingTarget.toUpperCase()}" — vamos continuar! 💪`;
+      statusEl.textContent = `Quase! Era "${typingTarget.toUpperCase()}" — vamos continuar! 💪`;
       statusEl.className = 'voice-status bad';
       setTimeout(() => {
         document.getElementById('typeStep').style.display = 'none';
@@ -2087,7 +2174,7 @@ function updateLevelButtonsHighlight(){
 const MANUAL_LEVEL_MAP = {
   basico: { diff: MIN_DIFFICULTY, phase: 1, label: 'Básico' },
   intermediario: { diff: 4, phase: 10, label: 'Intermediário' },
-  avancado: { diff: 6, phase: 18, label: 'Avançado' },
+  avancado: { diff: 7, phase: 20, label: 'Avançado' },
 };
 function applyManualLevel(levelKey){
   const m = MANUAL_LEVEL_MAP[levelKey];
@@ -2361,6 +2448,129 @@ function updateOfflineBadge(){
 window.addEventListener('online', updateOfflineBadge);
 window.addEventListener('offline', updateOfflineBadge);
 updateOfflineBadge();
+
+// ---------------- MATCH GAME (connect the dots) ----------------
+const MATCH_ITEM_COUNT = 5;
+let matchWords = [];      // shuffled list for the left column
+let matchEmojis = [];     // shuffled list for the right column (same words, different order)
+let matchSelectedWordIdx = null;
+let matchMatchedEns = new Set();
+
+document.getElementById('matchGameBtn').addEventListener('click', () => {
+  showScreen('match');
+  startMatchRound();
+});
+document.getElementById('matchBackBtn').addEventListener('click', () => renderHome());
+document.getElementById('matchNewRoundBtn').addEventListener('click', startMatchRound);
+
+function startMatchRound(){
+  const unlockedCount = Math.min(CATEGORIES.length, progress.phaseNumber);
+  const featured = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
+  let pool = [...featured.words];
+  if(pool.length < MATCH_ITEM_COUNT){
+    const reviewPool = CATEGORIES.slice(0, unlockedCount).flatMap((c) => c.words).filter((w) => w.en !== undefined);
+    pool = pool.concat(shuffle(reviewPool).filter((w) => !pool.some((p) => p.en === w.en)));
+  }
+  const chosen = shuffle(pool).slice(0, Math.min(MATCH_ITEM_COUNT, pool.length));
+  matchWords = shuffle(chosen);
+  matchEmojis = shuffle(chosen);
+  matchSelectedWordIdx = null;
+  matchMatchedEns = new Set();
+  document.getElementById('matchStatus').textContent = 'Toque numa palavra e depois na imagem certa!';
+  drawMatchGame();
+}
+
+function drawMatchGame(){
+  const wordsCol = document.getElementById('matchWordsCol');
+  const emojisCol = document.getElementById('matchEmojisCol');
+  wordsCol.innerHTML = '';
+  emojisCol.innerHTML = '';
+
+  matchWords.forEach((w, i) => {
+    const btn = document.createElement('button');
+    const matched = matchMatchedEns.has(w.en);
+    btn.className = 'match-item' + (matched ? ' matched' : matchSelectedWordIdx === i ? ' selected' : '');
+    btn.textContent = w.en;
+    btn.disabled = matched;
+    btn.id = 'match-word-' + i;
+    btn.addEventListener('click', () => handleMatchWordTap(i));
+    wordsCol.appendChild(btn);
+  });
+  matchEmojis.forEach((w, i) => {
+    const btn = document.createElement('button');
+    const matched = matchMatchedEns.has(w.en);
+    btn.className = 'match-item emoji-item' + (matched ? ' matched' : '');
+    btn.textContent = w.emoji;
+    btn.disabled = matched;
+    btn.id = 'match-emoji-' + i;
+    btn.addEventListener('click', () => handleMatchEmojiTap(i));
+    emojisCol.appendChild(btn);
+  });
+
+  drawMatchLines();
+}
+
+function handleMatchWordTap(i){
+  if(matchMatchedEns.has(matchWords[i].en)) return;
+  matchSelectedWordIdx = (matchSelectedWordIdx === i) ? null : i;
+  drawMatchGame();
+}
+
+function handleMatchEmojiTap(i){
+  if(matchSelectedWordIdx === null) return;
+  const wordItem = matchWords[matchSelectedWordIdx];
+  const emojiItem = matchEmojis[i];
+  if(matchMatchedEns.has(emojiItem.en)) return;
+
+  if(wordItem.en === emojiItem.en){
+    matchMatchedEns.add(wordItem.en);
+    matchSelectedWordIdx = null;
+    playSuccessSound();
+    vibrateSuccess();
+    drawMatchGame();
+    if(matchMatchedEns.size === matchWords.length){
+      document.getElementById('matchStatus').textContent = 'Muito bem! Você ligou todas! 🎉';
+      burstConfetti();
+      setTimeout(startMatchRound, 1700);
+    }
+  } else {
+    playErrorSound();
+    vibrateError();
+    const emojiBtn = document.getElementById('match-emoji-' + i);
+    if(emojiBtn){
+      emojiBtn.classList.add('wrong-shake');
+      setTimeout(() => emojiBtn.classList.remove('wrong-shake'), 300);
+    }
+  }
+}
+
+function drawMatchLines(){
+  const svg = document.getElementById('matchSvg');
+  const wrap = document.getElementById('matchWrap');
+  svg.innerHTML = '';
+  if(!matchMatchedEns.size) return;
+  const wrapRect = wrap.getBoundingClientRect();
+  matchMatchedEns.forEach((en) => {
+    const wIdx = matchWords.findIndex((w) => w.en === en);
+    const eIdx = matchEmojis.findIndex((w) => w.en === en);
+    const wEl = document.getElementById('match-word-' + wIdx);
+    const eEl = document.getElementById('match-emoji-' + eIdx);
+    if(!wEl || !eEl) return;
+    const wRect = wEl.getBoundingClientRect();
+    const eRect = eEl.getBoundingClientRect();
+    const x1 = wRect.right - wrapRect.left;
+    const y1 = wRect.top + wRect.height / 2 - wrapRect.top;
+    const x2 = eRect.left - wrapRect.left;
+    const y2 = eRect.top + eRect.height / 2 - wrapRect.top;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('stroke', '#3FBF7F');
+    line.setAttribute('stroke-width', '3');
+    line.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(line);
+  });
+}
 
 // ---------------- INIT ----------------
 loadSettings();
