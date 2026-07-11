@@ -55,7 +55,11 @@
   }
   .day-card .day-num{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:34px; color:var(--plum); margin:0; }
   .day-card .day-total{ font-size:13px; font-weight:700; color:#9186b8; margin:0 0 10px; }
-  .day-card .day-cat{ font-size:15px; font-weight:800; color: var(--coral); font-family:'Baloo 2', sans-serif; margin-bottom:14px;}
+  .day-card .day-cat{ font-size:15px; font-weight:800; color: var(--coral); font-family:'Baloo 2', sans-serif; margin-bottom:6px;}
+  .diff-badge{
+    display:inline-block; font-size:11px; font-weight:800; padding:3px 10px; border-radius:999px;
+    font-family:'Baloo 2', sans-serif; margin-bottom:14px; background:#FFF1D8; color:#B9791F;
+  }
 
   .goal-bar-wrap{ margin: 6px 0 4px; }
   .goal-label{ display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:#6b5b95; margin-bottom:5px; }
@@ -68,8 +72,6 @@
     background: var(--coral); color:white; box-shadow: 0 5px 0 rgba(184,60,45,0.4);
   }
   .cta-btn:active{ transform: translateY(3px); box-shadow:none; }
-  .cta-btn.done{ background: var(--leaf); box-shadow: 0 5px 0 rgba(30,120,75,0.4); }
-  .cta-btn.secondary-cta{ background:var(--white); color:var(--plum); box-shadow: var(--shadow); margin-top:8px; }
 
   .streak-pill{
     display:inline-flex; align-items:center; gap:5px; background:#FFF1D8; color:#B9791F;
@@ -91,9 +93,7 @@
   .unlock-chip .uc-emoji{ font-size:22px; }
   .unlock-chip .uc-name{ font-size:9.5px; font-weight:800; color:var(--plum); text-align:center; line-height:1.15; }
 
-  .next-unlock-note{
-    text-align:center; font-size:12px; font-weight:700; color:#9186b8; margin: 4px 0 0;
-  }
+  .next-unlock-note{ text-align:center; font-size:12px; font-weight:700; color:#9186b8; margin: 4px 0 0; }
 
   /* GAME */
   .level-heading{
@@ -141,6 +141,34 @@
   .feedback-banner.good{ background:#EAFBF2; color:#1E9E63; }
   .feedback-banner.bad{ background:#FFEFEC; color:#E1503F; }
 
+  /* VOICE STEP */
+  .voice-step{ display:none; flex-direction:column; align-items:center; flex:1; justify-content:center; gap:6px; }
+  .voice-step.active{ display:flex; }
+  .voice-instructions{ font-size:13px; font-weight:700; color:#9186b8; text-transform:uppercase; letter-spacing:.5px; margin:0 0 4px; }
+  .voice-target{
+    font-family:'Baloo 2', sans-serif; font-size: clamp(30px, 9vw, 42px); font-weight:800; color:var(--plum); margin:0 0 20px;
+  }
+  .mic-btn{
+    border:none; width:96px; height:96px; border-radius:50%;
+    background: var(--coral); color:white; font-size:42px;
+    box-shadow: 0 6px 0 rgba(184,60,45,0.4); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: transform .15s ease;
+  }
+  .mic-btn:active{ transform: translateY(4px); box-shadow:none; }
+  .mic-btn.listening{
+    animation: pulse 1s ease-in-out infinite;
+    background: var(--sky); box-shadow: 0 6px 0 rgba(30,110,150,0.4);
+  }
+  @keyframes pulse{ 0%,100%{ transform: scale(1); } 50%{ transform: scale(1.12); } }
+  .voice-status{
+    margin-top:16px; font-family:'Baloo 2', sans-serif; font-weight:700; font-size:15px;
+    color:#6b5b95; text-align:center; min-height:22px;
+  }
+  .voice-status.good{ color:#1E9E63; }
+  .voice-status.bad{ color:#E1503F; }
+  .voice-hint{ font-size:12px; color:#a89bcf; margin-top:10px; text-align:center; max-width:260px; }
+
   /* RESULT */
   .result-screen{ align-items:center; justify-content:center; text-align:center; gap:10px; }
   .result-mascot{ font-size:66px; margin-bottom:4px; }
@@ -171,21 +199,10 @@
     background: linear-gradient(160deg, var(--sky), var(--sun));
     animation: splashFade 2.6s ease forwards;
   }
-  #splashScreen img{
-    width:132px; height:132px; border-radius:32px;
-    box-shadow: 0 10px 0 rgba(0,0,0,0.15);
-    animation: splashPop .6s cubic-bezier(.34,1.56,.64,1);
-  }
-  #splashScreen h2{
-    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:26px;
-    color: white; text-shadow: 0 3px 0 rgba(0,0,0,0.15); margin:0; text-align:center; padding:0 20px;
-  }
+  #splashScreen img{ width:132px; height:132px; border-radius:32px; box-shadow: 0 10px 0 rgba(0,0,0,0.15); animation: splashPop .6s cubic-bezier(.34,1.56,.64,1); }
+  #splashScreen h2{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:26px; color: white; text-shadow: 0 3px 0 rgba(0,0,0,0.15); margin:0; text-align:center; padding:0 20px; }
   @keyframes splashPop{ from{ transform: scale(0.5); opacity:0;} to{ transform: scale(1); opacity:1;} }
-  @keyframes splashFade{
-    0%{ opacity:1; }
-    75%{ opacity:1; }
-    100%{ opacity:0; visibility:hidden; pointer-events:none; }
-  }
+  @keyframes splashFade{ 0%{ opacity:1; } 75%{ opacity:1; } 100%{ opacity:0; visibility:hidden; pointer-events:none; } }
 </style>
 </head>
 <body>
@@ -209,46 +226,54 @@
   <section class="screen active" id="screen-home">
     <div class="day-card">
       <div id="streakPillWrap"></div>
-      <p class="day-num" id="dayNumLabel">Dia 1</p>
-      <p class="day-total">de 365 · jornada de um ano</p>
+      <p class="day-num" id="dayNumLabel">Fase 1</p>
+      <p class="day-total">continue jogando pra avançar!</p>
       <p class="day-cat" id="dayCatLabel">Bichos · Animals</p>
+      <div class="diff-badge" id="diffBadge">Nível fácil</div>
 
       <div class="goal-bar-wrap">
         <div class="goal-label">
           <span>Prática de hoje</span>
-          <span id="goalTimeLabel">0:00 / 30:00</span>
+          <span id="goalTimeLabel">0:00</span>
         </div>
         <div class="goal-track"><div class="goal-fill" id="goalFill" style="width:0%"></div></div>
       </div>
 
-      <button class="cta-btn" id="playTodayBtn">Começar prática de hoje ▶</button>
+      <button class="cta-btn" id="playTodayBtn">Começar a jogar ▶</button>
     </div>
 
-    <p class="section-label">Categorias destravadas (revisão livre)</p>
+    <p class="section-label">Categorias destravadas (jogar de novo)</p>
     <div class="unlocked-grid" id="unlockedGrid"></div>
     <p class="next-unlock-note" id="nextUnlockNote"></p>
 
-    <p class="storage-note">O progresso fica salvo neste navegador do celular. Se limpar os dados do navegador ou trocar de aparelho, a jornada reinicia do Dia 1.</p>
+    <p class="storage-note">O progresso fica salvo neste navegador do celular. Se limpar os dados do navegador ou trocar de aparelho, a jornada reinicia.</p>
   </section>
 
   <!-- GAME -->
   <section class="screen" id="screen-game">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
       <button class="back-btn" id="backBtn">←</button>
-      <p class="level-heading" id="levelHeading" style="flex:1; margin:0;">Dia 1 · Bichos</p>
+      <p class="level-heading" id="levelHeading" style="flex:1; margin:0;">Fase 1 · Bichos</p>
     </div>
     <p class="mini-timer" id="miniTimer">⏱ 0:00 hoje</p>
     <div class="progress-row" id="progressRow"></div>
 
-    <div class="word-card">
+    <div class="word-card" id="tapStep">
       <p class="prompt-pt">Toque na imagem certa</p>
       <p class="target-word" id="targetWord">word</p>
       <button class="speak-btn" id="speakBtn">🔊</button>
     </div>
-
     <div class="options-grid" id="optionsGrid"></div>
-
     <div class="feedback-banner" id="feedback"></div>
+
+    <div class="voice-step" id="voiceStep">
+      <p class="voice-instructions">Agora fala em voz alta:</p>
+      <p class="voice-target" id="voiceTarget">cat</p>
+      <button class="speak-btn" id="voiceSpeakBtn" style="margin-bottom:18px;">🔊</button>
+      <button class="mic-btn" id="micBtn">🎤</button>
+      <p class="voice-status" id="voiceStatus"></p>
+      <p class="voice-hint" id="voiceHint">Toque no microfone e repita a palavra</p>
+    </div>
   </section>
 
   <!-- RESULT -->
@@ -258,7 +283,7 @@
     <div class="result-stars" id="resultStars"></div>
     <p id="resultText">Você acertou tudo!</p>
     <div class="btn-row" id="resultBtnRow">
-      <button class="btn primary" id="continueBtn">Continuar praticando ▶</button>
+      <button class="btn primary" id="continueBtn">Próxima fase ▶</button>
       <button class="btn secondary" id="pauseBtn">Fazer uma pausa</button>
     </div>
   </section>
@@ -268,146 +293,132 @@
 <script>
 // ---------------- CONTENT BANK ----------------
 const CATEGORIES = [
-  { id:'animals', name:'Bichos', sub:'Animals', emoji:'🦁', css:'l-c1', words:[
+  { id:'animals', name:'Bichos', sub:'Animals', emoji:'🦁', words:[
     {en:'cat', emoji:'🐱'}, {en:'dog', emoji:'🐶'}, {en:'elephant', emoji:'🐘'},
     {en:'lion', emoji:'🦁'}, {en:'fish', emoji:'🐟'}, {en:'bird', emoji:'🐦'},
     {en:'rabbit', emoji:'🐰'}, {en:'monkey', emoji:'🐒'}
   ]},
-  { id:'colors', name:'Cores', sub:'Colors', emoji:'🎨', css:'l-c2', words:[
+  { id:'colors', name:'Cores', sub:'Colors', emoji:'🎨', words:[
     {en:'red', emoji:'🔴'}, {en:'blue', emoji:'🔵'}, {en:'yellow', emoji:'🟡'},
     {en:'green', emoji:'🟢'}, {en:'purple', emoji:'🟣'}, {en:'orange', emoji:'🟠'}
   ]},
-  { id:'numbers', name:'Números', sub:'Numbers', emoji:'🔢', css:'l-c3', words:[
+  { id:'numbers', name:'Números', sub:'Numbers', emoji:'🔢', words:[
     {en:'one', emoji:'1️⃣'}, {en:'two', emoji:'2️⃣'}, {en:'three', emoji:'3️⃣'},
     {en:'four', emoji:'4️⃣'}, {en:'five', emoji:'5️⃣'}, {en:'six', emoji:'6️⃣'},
     {en:'seven', emoji:'7️⃣'}, {en:'eight', emoji:'8️⃣'}, {en:'nine', emoji:'9️⃣'}, {en:'ten', emoji:'🔟'}
   ]},
-  { id:'shapes', name:'Formas', sub:'Shapes', emoji:'⭐', css:'l-c4', words:[
+  { id:'shapes', name:'Formas', sub:'Shapes', emoji:'⭐', words:[
     {en:'circle', emoji:'⚪'}, {en:'square', emoji:'◼️'}, {en:'triangle', emoji:'🔺'},
     {en:'star', emoji:'⭐'}, {en:'heart', emoji:'❤️'}, {en:'diamond', emoji:'🔷'}
   ]},
-  { id:'food', name:'Comida', sub:'Food', emoji:'🍎', css:'l-c5', words:[
+  { id:'food', name:'Comida', sub:'Food', emoji:'🍎', words:[
     {en:'apple', emoji:'🍎'}, {en:'banana', emoji:'🍌'}, {en:'bread', emoji:'🍞'},
     {en:'milk', emoji:'🥛'}, {en:'egg', emoji:'🥚'}, {en:'cake', emoji:'🍰'},
     {en:'cheese', emoji:'🧀'}, {en:'grape', emoji:'🍇'}
   ]},
-  { id:'body', name:'Corpo', sub:'Body', emoji:'✋', css:'l-c1', words:[
+  { id:'body', name:'Corpo', sub:'Body', emoji:'✋', words:[
     {en:'hand', emoji:'✋'}, {en:'foot', emoji:'🦶'}, {en:'eye', emoji:'👁️'},
     {en:'ear', emoji:'👂'}, {en:'nose', emoji:'👃'}, {en:'mouth', emoji:'👄'}
   ]},
-  { id:'family', name:'Família', sub:'Family', emoji:'👨‍👩‍👧', css:'l-c2', words:[
+  { id:'family', name:'Família', sub:'Family', emoji:'👨‍👩‍👧', words:[
     {en:'mom', emoji:'👩'}, {en:'dad', emoji:'👨'}, {en:'sister', emoji:'👧'},
     {en:'brother', emoji:'👦'}, {en:'baby', emoji:'👶'}, {en:'grandma', emoji:'👵'}
   ]},
-  { id:'clothes', name:'Roupas', sub:'Clothes', emoji:'👕', css:'l-c3', words:[
+  { id:'clothes', name:'Roupas', sub:'Clothes', emoji:'👕', words:[
     {en:'shirt', emoji:'👕'}, {en:'pants', emoji:'👖'}, {en:'shoes', emoji:'👟'},
     {en:'hat', emoji:'🧢'}, {en:'dress', emoji:'👗'}, {en:'socks', emoji:'🧦'}
   ]},
-  { id:'weather', name:'Clima', sub:'Weather', emoji:'☀️', css:'l-c4', words:[
+  { id:'weather', name:'Clima', sub:'Weather', emoji:'☀️', words:[
     {en:'sun', emoji:'☀️'}, {en:'rain', emoji:'🌧️'}, {en:'snow', emoji:'❄️'},
     {en:'wind', emoji:'💨'}, {en:'cloud', emoji:'☁️'}, {en:'storm', emoji:'⛈️'}
   ]},
-  { id:'vehicles', name:'Veículos', sub:'Vehicles', emoji:'🚗', css:'l-c5', words:[
+  { id:'vehicles', name:'Veículos', sub:'Vehicles', emoji:'🚗', words:[
     {en:'car', emoji:'🚗'}, {en:'bus', emoji:'🚌'}, {en:'bike', emoji:'🚲'},
     {en:'train', emoji:'🚆'}, {en:'boat', emoji:'⛵'}, {en:'airplane', emoji:'✈️'}
   ]},
-  { id:'feelings', name:'Sentimentos', sub:'Feelings', emoji:'😀', css:'l-c1', words:[
+  { id:'feelings', name:'Sentimentos', sub:'Feelings', emoji:'😀', words:[
     {en:'happy', emoji:'😀'}, {en:'sad', emoji:'😢'}, {en:'angry', emoji:'😠'},
     {en:'scared', emoji:'😱'}, {en:'tired', emoji:'😴'}, {en:'surprised', emoji:'😲'}
   ]},
-  { id:'verbs', name:'Ações', sub:'Verbs', emoji:'🏃', css:'l-c2', words:[
+  { id:'verbs', name:'Ações', sub:'Verbs', emoji:'🏃', words:[
     {en:'run', emoji:'🏃'}, {en:'jump', emoji:'🤸'}, {en:'play', emoji:'⚽'},
     {en:'eat', emoji:'🍽️'}, {en:'sleep', emoji:'🛌'}, {en:'drink', emoji:'🥤'},
     {en:'dance', emoji:'💃'}, {en:'sing', emoji:'🎤'}, {en:'swim', emoji:'🏊'}, {en:'walk', emoji:'🚶'}
   ]},
-  { id:'school', name:'Escola', sub:'School', emoji:'✏️', css:'l-c3', words:[
+  { id:'school', name:'Escola', sub:'School', emoji:'✏️', words:[
     {en:'pencil', emoji:'✏️'}, {en:'book', emoji:'📖'}, {en:'backpack', emoji:'🎒'},
     {en:'scissors', emoji:'✂️'}, {en:'ruler', emoji:'📏'}, {en:'crayon', emoji:'🖍️'}
   ]},
-  { id:'nature', name:'Natureza', sub:'Nature', emoji:'🌳', css:'l-c4', words:[
+  { id:'nature', name:'Natureza', sub:'Nature', emoji:'🌳', words:[
     {en:'tree', emoji:'🌳'}, {en:'flower', emoji:'🌸'}, {en:'mountain', emoji:'⛰️'},
     {en:'moon', emoji:'🌙'}, {en:'grass', emoji:'🌱'}, {en:'leaf', emoji:'🍃'}
   ]},
-  { id:'sea', name:'Mar', sub:'Sea', emoji:'🐋', css:'l-c5', words:[
+  { id:'sea', name:'Mar', sub:'Sea', emoji:'🐋', words:[
     {en:'whale', emoji:'🐋'}, {en:'shark', emoji:'🦈'}, {en:'octopus', emoji:'🐙'},
     {en:'crab', emoji:'🦀'}, {en:'dolphin', emoji:'🐬'}, {en:'turtle', emoji:'🐢'}
   ]},
-  { id:'insects', name:'Insetos', sub:'Insects', emoji:'🐝', css:'l-c1', words:[
+  { id:'insects', name:'Insetos', sub:'Insects', emoji:'🐝', words:[
     {en:'bee', emoji:'🐝'}, {en:'butterfly', emoji:'🦋'}, {en:'ladybug', emoji:'🐞'},
     {en:'ant', emoji:'🐜'}, {en:'spider', emoji:'🕷️'}, {en:'snail', emoji:'🐌'}
   ]},
-  { id:'farm', name:'Fazenda', sub:'Farm', emoji:'🐄', css:'l-c2', words:[
+  { id:'farm', name:'Fazenda', sub:'Farm', emoji:'🐄', words:[
     {en:'cow', emoji:'🐄'}, {en:'pig', emoji:'🐷'}, {en:'horse', emoji:'🐴'},
     {en:'sheep', emoji:'🐑'}, {en:'chicken', emoji:'🐔'}, {en:'duck', emoji:'🦆'}
   ]},
-  { id:'toys', name:'Brinquedos', sub:'Toys', emoji:'🧸', css:'l-c3', words:[
+  { id:'toys', name:'Brinquedos', sub:'Toys', emoji:'🧸', words:[
     {en:'teddy bear', emoji:'🧸'}, {en:'kite', emoji:'🪁'}, {en:'robot', emoji:'🤖'},
     {en:'blocks', emoji:'🧱'}, {en:'puzzle', emoji:'🧩'}, {en:'balloon', emoji:'🎈'}
   ]},
-  { id:'instruments', name:'Instrumentos', sub:'Instruments', emoji:'🎸', css:'l-c4', words:[
+  { id:'instruments', name:'Instrumentos', sub:'Instruments', emoji:'🎸', words:[
     {en:'guitar', emoji:'🎸'}, {en:'piano', emoji:'🎹'}, {en:'drum', emoji:'🥁'},
     {en:'violin', emoji:'🎻'}, {en:'trumpet', emoji:'🎺'}, {en:'maracas', emoji:'🪇'}
   ]},
-  { id:'jobs', name:'Profissões', sub:'Jobs', emoji:'🧑‍⚕️', css:'l-c5', words:[
+  { id:'jobs', name:'Profissões', sub:'Jobs', emoji:'🧑‍⚕️', words:[
     {en:'doctor', emoji:'🧑‍⚕️'}, {en:'teacher', emoji:'🧑‍🏫'}, {en:'firefighter', emoji:'🧑‍🚒'},
     {en:'police officer', emoji:'👮'}, {en:'chef', emoji:'🧑‍🍳'}, {en:'farmer', emoji:'🧑‍🌾'}
   ]},
 ];
 
-// ---------------- CURRICULUM CONFIG ----------------
-const TOTAL_DAYS = 365;
-const DAY_SPACING = 15;         // a new category unlocks roughly every 15 days
-const DAILY_GOAL_SECONDS = 30 * 60;
-const ROUND_SIZE = 8;
+// ---------------- ADAPTIVE DIFFICULTY CONFIG ----------------
+const PHASE_WORD_COUNT = 6;
+const MIN_DIFFICULTY = 2;
+const MAX_DIFFICULTY = 6;
+const MAX_VOICE_ATTEMPTS = 3;
 const STORAGE_KEY = 'safariEnglishProgress';
+const DIFF_LABELS = { 2:'Nível fácil', 3:'Nível fácil', 4:'Nível médio', 5:'Nível difícil', 6:'Nível avançado' };
 
-function getUnlockedCount(dayIndex){
-  return Math.min(CATEGORIES.length, Math.max(1, Math.ceil(dayIndex / DAY_SPACING)));
-}
-function getOptionsCount(dayIndex){
-  return Math.min(6, 2 + Math.floor((dayIndex - 1) / 45));
-}
-function getSpeechRate(dayIndex){
-  return 0.8 + 0.2 * Math.min(1, (dayIndex - 1) / (TOTAL_DAYS - 1));
+function getSpeechRate(difficultyLevel){
+  return 0.8 + (difficultyLevel - MIN_DIFFICULTY) * 0.035;
 }
 
 // ---------------- STORAGE ----------------
 function todayStr(){ return new Date().toISOString().slice(0,10); }
-function daysBetween(a, b){
-  const d1 = new Date(a + 'T00:00:00');
-  const d2 = new Date(b + 'T00:00:00');
-  return Math.round((d2 - d1) / 86400000);
-}
 
 let progress = null;
 function loadProgress(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      progress = JSON.parse(raw);
-    }
+    if(raw) progress = JSON.parse(raw);
   }catch(e){ console.warn('Could not read saved progress', e); }
-  if(!progress || !progress.startDate){
-    progress = { startDate: todayStr(), completedDates: [], dailySeconds: {}, totalStars: 0 };
+  if(!progress || !progress.phaseNumber){
+    progress = {
+      phaseNumber: 1,
+      difficultyLevel: MIN_DIFFICULTY,
+      totalStars: 0,
+      dailySeconds: {},
+      completedDates: []
+    };
     saveProgress();
   }
 }
 function saveProgress(){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-  }catch(e){ console.warn('Could not save progress', e); }
-}
-
-function getDayIndex(){
-  const idx = daysBetween(progress.startDate, todayStr()) + 1;
-  return Math.min(TOTAL_DAYS, Math.max(1, idx));
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
+  catch(e){ console.warn('Could not save progress', e); }
 }
 function getTodaySeconds(){ return progress.dailySeconds[todayStr()] || 0; }
-function isTodayCompleted(){ return progress.completedDates.includes(todayStr()); }
-
 function getStreak(){
   let streak = 0;
-  let cursor = isTodayCompleted() ? todayStr() : (new Date(Date.now() - 86400000)).toISOString().slice(0,10);
+  let cursor = progress.completedDates.includes(todayStr()) ? todayStr() : (new Date(Date.now() - 86400000)).toISOString().slice(0,10);
   while(progress.completedDates.includes(cursor)){
     streak++;
     cursor = (new Date(new Date(cursor+'T00:00:00').getTime() - 86400000)).toISOString().slice(0,10);
@@ -415,16 +426,47 @@ function getStreak(){
   return streak;
 }
 
+// ---------------- SPEECH RECOGNITION SETUP ----------------
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+if(SpeechRecognitionCtor){
+  recognition = new SpeechRecognitionCtor();
+  recognition.lang = 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 3;
+}
+
+function normalizeWord(str){ return (str||'').toLowerCase().replace(/[^a-z ]/g,'').trim(); }
+function levenshtein(a, b){
+  const m = a.length, n = b.length;
+  const dp = Array.from({length:m+1}, (_,i) => [i, ...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) dp[0][j] = j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+function isCloseMatch(said, target){
+  const s = normalizeWord(said), t = normalizeWord(target);
+  if(!s) return false;
+  if(s === t || s.includes(t) || t.includes(s)) return true;
+  const dist = levenshtein(s, t);
+  return dist <= Math.max(1, Math.floor(t.length * 0.4));
+}
+
 // ---------------- STATE ----------------
-let dayIndex = 1;
-let currentCategory = null;   // category object for this round
-let currentOptionsCount = 2;
+let currentCategory = null;
+let currentOptionsCount = MIN_DIFFICULTY;
 let currentRate = 0.8;
-let roundWords = [];
+let phaseWords = [];
 let roundIndex = 0;
 let roundCorrectFirstTry = 0;
 let awaitingAnswer = true;
 let triedWrongThisWord = false;
+let voiceAttempts = 0;
 let onGameScreen = false;
 
 // ---------------- ELEMENTS ----------------
@@ -436,6 +478,7 @@ const screens = {
 const starCountEl = document.getElementById('starCount');
 const dayNumLabel = document.getElementById('dayNumLabel');
 const dayCatLabel = document.getElementById('dayCatLabel');
+const diffBadge = document.getElementById('diffBadge');
 const goalTimeLabel = document.getElementById('goalTimeLabel');
 const goalFill = document.getElementById('goalFill');
 const playTodayBtn = document.getElementById('playTodayBtn');
@@ -446,10 +489,18 @@ const nextUnlockNote = document.getElementById('nextUnlockNote');
 const levelHeading = document.getElementById('levelHeading');
 const miniTimer = document.getElementById('miniTimer');
 const progressRow = document.getElementById('progressRow');
+const tapStep = document.getElementById('tapStep');
 const targetWordEl = document.getElementById('targetWord');
 const optionsGrid = document.getElementById('optionsGrid');
 const feedback = document.getElementById('feedback');
 const speakBtn = document.getElementById('speakBtn');
+
+const voiceStep = document.getElementById('voiceStep');
+const voiceTarget = document.getElementById('voiceTarget');
+const voiceSpeakBtn = document.getElementById('voiceSpeakBtn');
+const micBtn = document.getElementById('micBtn');
+const voiceStatus = document.getElementById('voiceStatus');
+const voiceHint = document.getElementById('voiceHint');
 
 function showScreen(name){
   Object.values(screens).forEach(s => s.classList.remove('active'));
@@ -482,7 +533,7 @@ function fmtTime(totalSeconds){
 
 function refreshStarCount(){ starCountEl.textContent = progress.totalStars; }
 
-// ---------------- TIMER (counts only while actively practicing) ----------------
+// ---------------- TIMER (informational, does not block progress) ----------------
 let tickCounter = 0;
 setInterval(() => {
   if(!onGameScreen) return;
@@ -491,56 +542,45 @@ setInterval(() => {
   tickCounter++;
   if(tickCounter % 5 === 0) saveProgress();
   updateMiniTimer();
+  const seconds = getTodaySeconds();
+  if(seconds >= 1800 && !progress.completedDates.includes(todayStr())){
+    progress.completedDates.push(todayStr());
+    saveProgress();
+  }
 }, 1000);
 window.addEventListener('beforeunload', () => saveProgress());
 
-function updateMiniTimer(){
-  miniTimer.textContent = `⏱ ${fmtTime(getTodaySeconds())} hoje`;
-}
+function updateMiniTimer(){ miniTimer.textContent = `⏱ ${fmtTime(getTodaySeconds())} hoje`; }
 
 // ---------------- HOME SCREEN ----------------
 function renderHome(){
-  dayIndex = getDayIndex();
-  const unlockedCount = getUnlockedCount(dayIndex);
-  const featured = CATEGORIES[unlockedCount - 1];
+  const unlockedCount = Math.min(CATEGORIES.length, progress.phaseNumber);
+  const featured = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
   const seconds = getTodaySeconds();
-  const pct = Math.min(100, Math.round((seconds / DAILY_GOAL_SECONDS) * 100));
-  const completedToday = isTodayCompleted();
+  const pct = Math.min(100, Math.round((seconds / 1800) * 100));
 
-  dayNumLabel.textContent = `Dia ${dayIndex}`;
+  dayNumLabel.textContent = `Fase ${progress.phaseNumber}`;
   dayCatLabel.textContent = `${featured.name} · ${featured.sub}`;
-  goalTimeLabel.textContent = `${fmtTime(seconds)} / 30:00`;
+  diffBadge.textContent = DIFF_LABELS[progress.difficultyLevel] || 'Nível fácil';
+  goalTimeLabel.textContent = `${fmtTime(seconds)}`;
   goalFill.style.width = pct + '%';
 
   const streak = getStreak();
   streakPillWrap.innerHTML = streak > 0 ? `<div class="streak-pill">🔥 ${streak} dia${streak>1?'s':''} seguido${streak>1?'s':''}</div>` : '';
 
-  if(dayIndex >= TOTAL_DAYS && completedToday){
-    playTodayBtn.textContent = 'Você completou os 365 dias! 🏆 Praticar bônus';
-    playTodayBtn.classList.add('done');
-  } else if(completedToday){
-    playTodayBtn.textContent = `Dia concluído! ✅ Praticar bônus`;
-    playTodayBtn.classList.add('done');
-  } else if(seconds > 0){
-    playTodayBtn.textContent = 'Continuar praticando ▶';
-    playTodayBtn.classList.remove('done');
-  } else {
-    playTodayBtn.textContent = 'Começar prática de hoje ▶';
-    playTodayBtn.classList.remove('done');
-  }
+  playTodayBtn.textContent = progress.phaseNumber > 1 || seconds > 0 ? 'Continuar jogando ▶' : 'Começar a jogar ▶';
 
   unlockedGrid.innerHTML = '';
   CATEGORIES.slice(0, unlockedCount).forEach((cat) => {
     const chip = document.createElement('button');
     chip.className = 'unlock-chip';
     chip.innerHTML = `<span class="uc-emoji">${cat.emoji}</span><span class="uc-name">${cat.name}</span>`;
-    chip.addEventListener('click', () => startRound(cat));
+    chip.addEventListener('click', () => startPhase(cat, false));
     unlockedGrid.appendChild(chip);
   });
 
   if(unlockedCount < CATEGORIES.length){
-    const daysUntilNext = (unlockedCount * DAY_SPACING) - dayIndex + 1;
-    nextUnlockNote.textContent = `🔒 Nova categoria em ${Math.max(1,daysUntilNext)} dia(s)`;
+    nextUnlockNote.textContent = `🔒 Mais ${CATEGORIES.length - unlockedCount} categoria(s) por vir`;
   } else {
     nextUnlockNote.textContent = '🎉 Todas as categorias já foram destravadas!';
   }
@@ -550,33 +590,31 @@ function renderHome(){
 }
 
 playTodayBtn.addEventListener('click', () => {
-  dayIndex = getDayIndex();
-  const unlockedCount = getUnlockedCount(dayIndex);
-  const featured = CATEGORIES[unlockedCount - 1];
-  startRound(featured, true);
+  const featured = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
+  startPhase(featured, true);
 });
 
 // ---------------- GAME LOGIC ----------------
-function buildTodayWordPool(featuredCat){
-  const unlockedCount = getUnlockedCount(dayIndex);
+function buildPhaseWordPool(featuredCat){
+  const unlockedCount = Math.min(CATEGORIES.length, progress.phaseNumber);
   let pool = [...featuredCat.words];
   if(unlockedCount > 1){
     const reviewCats = CATEGORIES.slice(0, unlockedCount - 1);
     const reviewPool = reviewCats.flatMap(c => c.words);
-    pool = pool.concat(shuffle(reviewPool).slice(0, Math.min(4, reviewPool.length)));
+    pool = pool.concat(shuffle(reviewPool).slice(0, Math.min(3, reviewPool.length)));
   }
-  return shuffle(pool).slice(0, Math.min(ROUND_SIZE, pool.length));
+  return shuffle(pool).slice(0, Math.min(PHASE_WORD_COUNT, pool.length));
 }
 
-function startRound(category, isFeatured){
-  dayIndex = getDayIndex();
+function startPhase(category, isMainPhase){
   currentCategory = category;
-  currentOptionsCount = getOptionsCount(dayIndex);
-  currentRate = getSpeechRate(dayIndex);
-  roundWords = isFeatured ? buildTodayWordPool(category) : shuffle(category.words).slice(0, Math.min(ROUND_SIZE, category.words.length));
+  currentOptionsCount = progress.difficultyLevel;
+  currentRate = getSpeechRate(progress.difficultyLevel);
+  phaseWords = isMainPhase ? buildPhaseWordPool(category) : shuffle(category.words).slice(0, Math.min(PHASE_WORD_COUNT, category.words.length));
   roundIndex = 0;
   roundCorrectFirstTry = 0;
-  levelHeading.textContent = `Dia ${dayIndex} · ${category.name}`;
+  levelHeading.textContent = isMainPhase ? `Fase ${progress.phaseNumber} · ${category.name}` : `Revisão · ${category.name}`;
+  startPhase._isMain = isMainPhase;
   buildProgress();
   showScreen('game');
   updateMiniTimer();
@@ -585,7 +623,7 @@ function startRound(category, isFeatured){
 
 function buildProgress(){
   progressRow.innerHTML = '';
-  roundWords.forEach((_, i) => {
+  phaseWords.forEach((_, i) => {
     const d = document.createElement('div');
     d.className = 'dot'; d.id = 'dot-' + i;
     progressRow.appendChild(d);
@@ -593,7 +631,7 @@ function buildProgress(){
   updateProgress();
 }
 function updateProgress(){
-  roundWords.forEach((_, i) => {
+  phaseWords.forEach((_, i) => {
     const d = document.getElementById('dot-' + i);
     d.classList.remove('current','done');
     if(i < roundIndex) d.classList.add('done');
@@ -602,16 +640,19 @@ function updateProgress(){
 }
 
 function loadWord(){
-  if(roundIndex >= roundWords.length){
-    finishRound();
+  if(roundIndex >= phaseWords.length){
+    finishPhase();
     return;
   }
   awaitingAnswer = true;
   triedWrongThisWord = false;
   feedback.classList.remove('show','good','bad');
+  tapStep.style.display = '';
+  optionsGrid.style.display = '';
+  voiceStep.classList.remove('active');
   updateProgress();
 
-  const current = roundWords[roundIndex];
+  const current = phaseWords[roundIndex];
   document.querySelector('.prompt-pt').textContent = 'Toque na imagem certa';
   targetWordEl.textContent = current.en;
 
@@ -645,7 +686,10 @@ function loadWord(){
 }
 
 speakBtn.addEventListener('click', () => {
-  if(roundWords[roundIndex]) speak(roundWords[roundIndex].en, currentRate);
+  if(phaseWords[roundIndex]) speak(phaseWords[roundIndex].en, currentRate);
+});
+voiceSpeakBtn.addEventListener('click', () => {
+  if(phaseWords[roundIndex]) speak(phaseWords[roundIndex].en, currentRate);
 });
 
 function handleAnswer(isCorrect, btnEl){
@@ -655,13 +699,8 @@ function handleAnswer(isCorrect, btnEl){
     btnEl.classList.add('correct');
     feedback.textContent = '🎉 Muito bem! / Very good!';
     feedback.className = 'feedback-banner show good';
-    if(!triedWrongThisWord){
-      roundCorrectFirstTry++;
-      progress.totalStars++;
-      refreshStarCount();
-      burstConfetti();
-    }
-    setTimeout(() => { roundIndex++; loadWord(); }, 900);
+    if(!triedWrongThisWord) burstConfetti();
+    setTimeout(() => { showVoiceStep(); }, 900);
   } else {
     btnEl.classList.add('wrong');
     btnEl.disabled = true;
@@ -671,11 +710,94 @@ function handleAnswer(isCorrect, btnEl){
   }
 }
 
-function finishRound(){
-  saveProgress();
-  const seconds = getTodaySeconds();
-  const goalReached = seconds >= DAILY_GOAL_SECONDS;
-  const wasAlreadyCompleted = isTodayCompleted();
+// ---------------- VOICE STEP ----------------
+function showVoiceStep(){
+  tapStep.style.display = 'none';
+  optionsGrid.style.display = 'none';
+  feedback.classList.remove('show','good','bad');
+  voiceStep.classList.add('active');
+  voiceStatus.textContent = '';
+  voiceStatus.className = 'voice-status';
+  voiceHint.textContent = 'Toque no microfone e repita a palavra';
+  voiceAttempts = 0;
+  const current = phaseWords[roundIndex];
+  voiceTarget.textContent = current.en;
+
+  if(!recognition){
+    voiceStatus.textContent = 'Seu navegador não suporta o microfone aqui 😕';
+    voiceHint.textContent = 'Vamos continuar mesmo assim!';
+    micBtn.disabled = true;
+    setTimeout(() => advanceAfterVoice(true), 1400);
+  } else {
+    micBtn.disabled = false;
+  }
+}
+
+micBtn.addEventListener('click', () => {
+  if(!recognition || micBtn.disabled) return;
+  const current = phaseWords[roundIndex];
+  micBtn.classList.add('listening');
+  voiceStatus.textContent = 'Ouvindo... 👂';
+  voiceStatus.className = 'voice-status';
+  micBtn.disabled = true;
+
+  let handled = false;
+  recognition.onresult = (event) => {
+    handled = true;
+    const said = event.results[0][0].transcript;
+    if(isCloseMatch(said, current.en)){
+      voiceStatus.textContent = `Perfeito! Você falou "${said}" 🎉`;
+      voiceStatus.className = 'voice-status good';
+      progress.totalStars++;
+      refreshStarCount();
+      burstConfetti();
+      micBtn.classList.remove('listening');
+      setTimeout(() => advanceAfterVoice(true), 1200);
+    } else {
+      voiceAttempts++;
+      micBtn.classList.remove('listening');
+      if(voiceAttempts >= MAX_VOICE_ATTEMPTS){
+        voiceStatus.textContent = `Quase lá! A gente pratica essa de novo depois 💪`;
+        voiceStatus.className = 'voice-status bad';
+        setTimeout(() => advanceAfterVoice(false), 1400);
+      } else {
+        voiceStatus.textContent = `Quase! Ouvi "${said}" — tenta de novo 🙂`;
+        voiceStatus.className = 'voice-status bad';
+        micBtn.disabled = false;
+      }
+    }
+  };
+  recognition.onerror = () => {
+    if(handled) return;
+    micBtn.classList.remove('listening');
+    voiceAttempts++;
+    if(voiceAttempts >= MAX_VOICE_ATTEMPTS){
+      voiceStatus.textContent = 'Não consegui ouvir — vamos seguir em frente!';
+      voiceStatus.className = 'voice-status bad';
+      setTimeout(() => advanceAfterVoice(false), 1400);
+    } else {
+      voiceStatus.textContent = 'Não peguei direito, tenta de novo 🙂';
+      voiceStatus.className = 'voice-status bad';
+      micBtn.disabled = false;
+    }
+  };
+  recognition.onend = () => {
+    micBtn.classList.remove('listening');
+    if(!micBtn.disabled) return;
+    if(!handled) micBtn.disabled = false;
+  };
+  try{ recognition.start(); }catch(e){ micBtn.disabled = false; micBtn.classList.remove('listening'); }
+});
+
+function advanceAfterVoice(gotCorrectVoice){
+  if(!triedWrongThisWord) roundCorrectFirstTry++;
+  roundIndex++;
+  loadWord();
+}
+
+function finishPhase(){
+  const isMain = !!startPhase._isMain;
+  const accuracy = phaseWords.length ? roundCorrectFirstTry / phaseWords.length : 0;
 
   const resultStars = document.getElementById('resultStars');
   const resultText = document.getElementById('resultText');
@@ -684,29 +806,41 @@ function finishRound(){
   const continueBtn = document.getElementById('continueBtn');
   const pauseBtn = document.getElementById('pauseBtn');
 
-  const filled = '⭐'.repeat(roundCorrectFirstTry) + '☆'.repeat(roundWords.length - roundCorrectFirstTry);
+  const filled = '⭐'.repeat(roundCorrectFirstTry) + '☆'.repeat(phaseWords.length - roundCorrectFirstTry);
   resultStars.textContent = filled;
 
-  if(goalReached && !wasAlreadyCompleted){
-    progress.completedDates.push(todayStr());
+  if(isMain){
+    let diffMsg = '';
+    if(accuracy >= 0.85 && progress.difficultyLevel < MAX_DIFFICULTY){
+      progress.difficultyLevel++;
+      diffMsg = 'Você mandou muito bem — vamos aumentar o desafio! 🚀';
+    } else if(accuracy < 0.5 && progress.difficultyLevel > MIN_DIFFICULTY){
+      progress.difficultyLevel--;
+      diffMsg = 'Vamos praticar um pouquinho mais fácil pra pegar o jeito 💛';
+    } else {
+      diffMsg = 'Vamos continuar nesse nível — você está indo bem!';
+    }
+    progress.phaseNumber++;
     saveProgress();
-    const streak = getStreak();
-    resultTitle.textContent = dayIndex >= TOTAL_DAYS ? 'Você completou os 365 dias! 🏆🌍' : `Dia ${dayIndex} concluído! 🏆`;
+
+    resultTitle.textContent = `Fase concluída! 🏆`;
     resultMascot.textContent = '🏆';
-    resultText.textContent = `Você praticou ${fmtTime(seconds)} hoje e já está com ${streak} dia${streak>1?'s':''} seguido${streak>1?'s':''}! Volte amanhã para o Dia ${Math.min(TOTAL_DAYS, dayIndex+1)}.`;
-    continueBtn.textContent = 'Praticar mais (bônus)';
-    continueBtn.onclick = () => startRound(currentCategory, true);
-    pauseBtn.textContent = 'Ver meu progresso';
-    pauseBtn.onclick = () => renderHome();
+    resultText.textContent = `Você acertou ${roundCorrectFirstTry} de ${phaseWords.length} palavras. ${diffMsg}`;
+    continueBtn.textContent = 'Próxima fase ▶';
+    continueBtn.onclick = () => {
+      const nextCat = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
+      startPhase(nextCat, true);
+    };
   } else {
+    saveProgress();
     resultTitle.textContent = 'Muito bem!';
     resultMascot.textContent = '🎉';
-    resultText.textContent = `Você acertou ${roundCorrectFirstTry} de ${roundWords.length} palavras. Já praticou ${fmtTime(seconds)} de 30:00 hoje.`;
-    continueBtn.textContent = 'Continuar praticando ▶';
-    continueBtn.onclick = () => startRound(currentCategory, true);
-    pauseBtn.textContent = 'Fazer uma pausa';
-    pauseBtn.onclick = () => renderHome();
+    resultText.textContent = `Você revisou ${currentCategory.name} e acertou ${roundCorrectFirstTry} de ${phaseWords.length}!`;
+    continueBtn.textContent = 'Jogar de novo';
+    continueBtn.onclick = () => startPhase(currentCategory, false);
   }
+  pauseBtn.textContent = 'Voltar ao início';
+  pauseBtn.onclick = () => renderHome();
 
   showScreen('result');
 }
@@ -737,7 +871,26 @@ setTimeout(() => {
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW falhou', e));
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      // Force an immediate check for a newer sw.js every time the app opens.
+      reg.update();
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if(!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if(newWorker.state === 'activated'){
+            window.location.reload();
+          }
+        });
+      });
+    }).catch((e) => console.warn('SW falhou', e));
+
+    let refreshedOnce = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if(refreshedOnce) return;
+      refreshedOnce = true;
+      window.location.reload();
+    });
   });
 }
 </script>
