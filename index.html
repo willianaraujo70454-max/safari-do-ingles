@@ -72,6 +72,7 @@
     background: var(--coral); color:white; box-shadow: 0 5px 0 rgba(184,60,45,0.4);
   }
   .cta-btn:active{ transform: translateY(3px); box-shadow:none; }
+  .cta-btn.recess{ background: var(--grape); box-shadow: 0 5px 0 rgba(110,80,190,0.4); font-size:15px; }
 
   .streak-pill{
     display:inline-flex; align-items:center; gap:5px; background:#FFF1D8; color:#B9791F;
@@ -292,6 +293,7 @@
       </div>
 
       <button class="cta-btn" id="playTodayBtn">Começar a jogar ▶</button>
+      <button class="cta-btn recess" id="homeRecessBtn" style="margin-top:8px;">🎮 Hora do recreio</button>
     </div>
 
     <p class="section-label">Categorias destravadas (jogar de novo)</p>
@@ -1123,6 +1125,10 @@ const minigameSelect = document.getElementById('minigameSelect');
 const minigameArea = document.getElementById('minigameArea');
 
 document.getElementById('recessBtn').addEventListener('click', () => {
+  showScreen('minigames');
+  showMinigameSelect();
+});
+document.getElementById('homeRecessBtn').addEventListener('click', () => {
   showScreen('minigames');
   showMinigameSelect();
 });
