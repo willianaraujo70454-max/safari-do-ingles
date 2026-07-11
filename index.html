@@ -1487,8 +1487,10 @@ function advanceAfterVoice(){
 }
 
 // ---------------- TYPE STEP (spelling, phrases only) ----------------
+const MAX_TYPE_ATTEMPTS = 3;
 let typingTarget = '';
 let typingBuffer = '';
+let typingAttempts = 0;
 
 function getPhraseKeyWord(current){
   // Prefer the explicit key field (guaranteed to match the shown emoji).
@@ -1501,6 +1503,7 @@ function showTypeStep(current){
   voiceStep.classList.remove('active');
   typingTarget = getPhraseKeyWord(current);
   typingBuffer = typingTarget[0] || ''; // first letter pre-filled as a scaffold
+  typingAttempts = 0;
   document.getElementById('typeHint').textContent = current.emoji || '';
   document.getElementById('typeStatus').textContent = '';
   document.getElementById('typeStatus').className = 'voice-status';
@@ -1556,15 +1559,26 @@ function checkTyping(){
       loadWord();
     }, 1100);
   } else {
-    statusEl.textContent = 'Quase! Vamos tentar de novo até acertar 💪';
-    statusEl.className = 'voice-status bad';
+    typingAttempts++;
     playErrorSound();
     vibrateError();
-    setTimeout(() => {
-      typingBuffer = typingTarget[0] || '';
-      drawTypeSlots();
-      statusEl.textContent = '';
-    }, 1000);
+    if(typingAttempts >= MAX_TYPE_ATTEMPTS){
+      statusEl.textContent = `Quase! A palavra era "${typingTarget.toUpperCase()}" — vamos continuar! 💪`;
+      statusEl.className = 'voice-status bad';
+      setTimeout(() => {
+        document.getElementById('typeStep').style.display = 'none';
+        roundIndex++;
+        loadWord();
+      }, 1600);
+    } else {
+      statusEl.textContent = 'Quase! Vamos tentar de novo 🙂';
+      statusEl.className = 'voice-status bad';
+      setTimeout(() => {
+        typingBuffer = typingTarget[0] || '';
+        drawTypeSlots();
+        statusEl.textContent = '';
+      }, 1000);
+    }
   }
 }
 
