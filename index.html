@@ -246,6 +246,34 @@
 
   .storage-note{ font-size:10.5px; color:#a89bcf; text-align:center; margin-top:10px; line-height:1.4; }
 
+  /* SETTINGS */
+  .icon-btn{
+    border:none; background: var(--white); box-shadow: var(--shadow); border-radius:999px;
+    width:38px; height:38px; font-size:17px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex:none;
+  }
+  .icon-btn:active{ transform: translateY(2px); box-shadow:none; }
+  .settings-card{
+    background: var(--white); border-radius:22px; padding:20px; box-shadow: var(--shadow); margin-bottom:16px;
+  }
+  .settings-label{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:13px; color:var(--plum);
+    margin:0 0 8px; display:block;
+  }
+  .settings-input{
+    width:100%; border:2px solid #EFE3C8; border-radius:14px; padding:12px 14px;
+    font-family:'Nunito', sans-serif; font-size:15px; color:var(--plum); margin-bottom:18px;
+    background:var(--cream);
+  }
+  .settings-input:focus{ outline:none; border-color: var(--sky); }
+  .gender-toggle{ display:flex; gap:10px; margin-bottom:18px; }
+  .gender-btn{
+    flex:1; border:2px solid #EFE3C8; background:var(--cream); border-radius:14px; padding:12px;
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:14px; color:var(--plum); cursor:pointer;
+  }
+  .gender-btn.selected{ border-color: var(--coral); background:#FFF1EE; color:var(--coral); }
+  .settings-hint{ font-size:11.5px; color:#a89bcf; margin:-12px 0 18px; }
+
   /* SPLASH GREETING */
   #splashScreen{
     position:fixed; inset:0; z-index:999;
@@ -262,7 +290,7 @@
 <body>
 <div id="splashScreen">
   <img src="./icon-192.png" alt="Safari do Inglês">
-  <h2>Olá Pietra,<br>sua linda! 🥰</h2>
+  <h2 id="splashGreetingText">Olá!</h2>
 </div>
 <div id="app">
 
@@ -272,6 +300,7 @@
       <h1>Safari do <span>Inglês</span></h1>
     </div>
     <div class="header-stats">
+      <button class="icon-btn" id="settingsBtn" title="Configurações">⚙️</button>
       <div class="stat-pill">⭐ <span id="starCount">0</span></div>
     </div>
   </header>
@@ -330,6 +359,37 @@
       <button class="mic-btn" id="micBtn">🎤</button>
       <p class="voice-status" id="voiceStatus"></p>
       <p class="voice-hint" id="voiceHint">Toque no microfone e repita a palavra</p>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="screen" id="screen-settings">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+      <button class="back-btn" id="settingsBackBtn">←</button>
+      <p class="level-heading" style="flex:1; margin:0;">Configurações</p>
+    </div>
+
+    <div class="settings-card">
+      <label class="settings-label">Nome</label>
+      <input type="text" class="settings-input" id="settingsName" placeholder="Nome da criança" maxlength="20">
+
+      <label class="settings-label">Menino ou menina?</label>
+      <div class="gender-toggle">
+        <button class="gender-btn" id="genderMenino" data-gender="menino">👦 Menino</button>
+        <button class="gender-btn" id="genderMenina" data-gender="menina">👧 Menina</button>
+      </div>
+
+      <label class="settings-label">Frase de abertura personalizada</label>
+      <input type="text" class="settings-input" id="settingsGreeting" placeholder="Deixe em branco para usar a frase automática">
+      <p class="settings-hint">Se preencher, essa frase substitui a automática ("Olá [nome], seu lindo/sua linda!").</p>
+
+      <button class="cta-btn" id="saveSettingsBtn">Salvar</button>
+    </div>
+
+    <div class="settings-card">
+      <label class="settings-label">Reiniciar jornada</label>
+      <p class="settings-hint" style="margin-top:0;">Isso apaga todo o progresso (fases, estrelas, dificuldade) e recomeça do zero. Não afeta nome/foto/saudação.</p>
+      <button class="btn secondary" id="resetProgressBtn">🔄 Reiniciar do zero</button>
     </div>
   </section>
 
@@ -515,6 +575,7 @@ const MAX_DIFFICULTY = 6;
 const PHRASE_START_DIFFICULTY = 4; // from this difficulty level onward, phases use phrases instead of single words
 const MAX_VOICE_ATTEMPTS = 3;
 const STORAGE_KEY = 'safariEnglishProgress';
+const SETTINGS_KEY = 'safariEnglishSettings';
 const DIFF_LABELS = { 2:'Nível fácil', 3:'Nível fácil', 4:'Frases · fácil', 5:'Frases · médio', 6:'Frases · difícil' };
 
 function getWordSpeechRate(difficultyLevel){
@@ -522,6 +583,30 @@ function getWordSpeechRate(difficultyLevel){
 }
 function getPhraseSpeechRate(){
   return 0.82; // keep phrases clear and a bit slower regardless of level
+}
+
+// ---------------- SETTINGS (name, gender, custom greeting) ----------------
+let settings = null;
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if(raw) settings = JSON.parse(raw);
+  }catch(e){ console.warn('Could not read settings', e); }
+  if(!settings){
+    settings = { name:'Pietra', gender:'menina', customGreeting:'' };
+    saveSettings();
+  }
+}
+function saveSettings(){
+  try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+  catch(e){ console.warn('Could not save settings', e); }
+}
+function getGreetingText(){
+  if(settings.customGreeting && settings.customGreeting.trim()){
+    return settings.customGreeting.trim();
+  }
+  const pronoun = settings.gender === 'menino' ? 'seu lindo' : 'sua linda';
+  return `Olá ${settings.name || 'querido(a)'}, ${pronoun}!`;
 }
 
 // ---------------- STORAGE ----------------
@@ -547,6 +632,16 @@ function loadProgress(){
 function saveProgress(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
   catch(e){ console.warn('Could not save progress', e); }
+}
+function resetProgress(){
+  progress = {
+    phaseNumber: 1,
+    difficultyLevel: MIN_DIFFICULTY,
+    totalStars: 0,
+    dailySeconds: {},
+    completedDates: []
+  };
+  saveProgress();
 }
 function getTodaySeconds(){ return progress.dailySeconds[todayStr()] || 0; }
 function getStreak(){
@@ -623,6 +718,7 @@ const screens = {
   game: document.getElementById('screen-game'),
   result: document.getElementById('screen-result'),
   minigames: document.getElementById('screen-minigames'),
+  settings: document.getElementById('screen-settings'),
 };
 const starCountEl = document.getElementById('starCount');
 const dayNumLabel = document.getElementById('dayNumLabel');
@@ -1453,12 +1549,59 @@ function renderMemory(){
   draw();
 }
 
+// ---------------- SETTINGS SCREEN ----------------
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsBackBtn = document.getElementById('settingsBackBtn');
+const settingsNameInput = document.getElementById('settingsName');
+const settingsGreetingInput = document.getElementById('settingsGreeting');
+const genderMeninoBtn = document.getElementById('genderMenino');
+const genderMeninaBtn = document.getElementById('genderMenina');
+const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const resetProgressBtn = document.getElementById('resetProgressBtn');
+
+let pendingGender = 'menina';
+
+function renderSettingsScreen(){
+  settingsNameInput.value = settings.name || '';
+  settingsGreetingInput.value = settings.customGreeting || '';
+  pendingGender = settings.gender || 'menina';
+  updateGenderButtons();
+  showScreen('settings');
+}
+function updateGenderButtons(){
+  genderMeninoBtn.classList.toggle('selected', pendingGender === 'menino');
+  genderMeninaBtn.classList.toggle('selected', pendingGender === 'menina');
+}
+genderMeninoBtn.addEventListener('click', () => { pendingGender = 'menino'; updateGenderButtons(); });
+genderMeninaBtn.addEventListener('click', () => { pendingGender = 'menina'; updateGenderButtons(); });
+
+settingsBtn.addEventListener('click', renderSettingsScreen);
+settingsBackBtn.addEventListener('click', () => renderHome());
+
+saveSettingsBtn.addEventListener('click', () => {
+  settings.name = settingsNameInput.value.trim() || 'querido(a)';
+  settings.gender = pendingGender;
+  settings.customGreeting = settingsGreetingInput.value.trim();
+  saveSettings();
+  renderHome();
+});
+
+resetProgressBtn.addEventListener('click', () => {
+  const sure = confirm('Tem certeza? Isso vai apagar todo o progresso (fases, estrelas, dificuldade) e recomeçar do zero.');
+  if(sure){
+    resetProgress();
+    renderHome();
+  }
+});
+
 // ---------------- INIT ----------------
+loadSettings();
 loadProgress();
 renderHome();
 
+document.getElementById('splashGreetingText').textContent = getGreetingText();
 setTimeout(() => {
-  speak('Olá Pietra, você é linda!', 0.95, 'pt-BR');
+  speak(getGreetingText(), 0.95, 'pt-BR');
 }, 400);
 
 setTimeout(() => {
