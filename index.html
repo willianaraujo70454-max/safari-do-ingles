@@ -422,6 +422,7 @@
 
     <div class="voice-step" id="typeStep" style="display:none;">
       <p class="voice-instructions">Agora escreva a palavra:</p>
+      <p id="typeHint" style="font-size:56px; margin:4px 0 8px;">🖊️</p>
       <div class="guess-word" id="typeSlots" style="margin:14px 0;"></div>
       <div class="guess-keyboard" id="typeKeyboard"></div>
       <button class="btn secondary" id="typeBackspaceBtn" style="margin-top:14px; max-width:160px;">⌫ Apagar</button>
@@ -638,59 +639,59 @@ const CATEGORIES = [
 // tier 1: 2 words · tier 2: 3-4 words · tier 3: 5+ words
 const PHRASES = [
   // tier 1 — 2 words
-  { tier:1, en:'I run', pt:'Eu corro', emoji:'🏃' },
-  { tier:1, en:'I jump', pt:'Eu pulo', emoji:'🤸' },
-  { tier:1, en:'I play', pt:'Eu brinco', emoji:'⚽' },
-  { tier:1, en:'I sing', pt:'Eu canto', emoji:'🎤' },
-  { tier:1, en:'I swim', pt:'Eu nado', emoji:'🏊' },
-  { tier:1, en:'I dance', pt:'Eu danço', emoji:'💃' },
-  { tier:1, en:'I walk', pt:'Eu ando', emoji:'🚶' },
-  { tier:1, en:'I eat', pt:'Eu como', emoji:'🍽️' },
-  { tier:1, en:'I drink', pt:'Eu bebo', emoji:'🥤' },
-  { tier:1, en:'I sleep', pt:'Eu durmo', emoji:'🛌' },
-  { tier:1, en:'Big dog', pt:'Cachorro grande', emoji:'🐶' },
-  { tier:1, en:'Red apple', pt:'Maçã vermelha', emoji:'🍎' },
-  { tier:1, en:'Red bird', pt:'Pássaro vermelho', emoji:'🦜' },
-  { tier:1, en:'Blue fish', pt:'Peixe azul', emoji:'🐟' },
-  { tier:1, en:'Yellow lion', pt:'Leão amarelo', emoji:'🦁' },
-  { tier:1, en:'Green monkey', pt:'Macaco verde', emoji:'🐒' },
-  { tier:1, en:'Purple elephant', pt:'Elefante roxo', emoji:'🐘' },
-  { tier:1, en:'Orange rabbit', pt:'Coelho laranja', emoji:'🐰' },
+  { tier:1, en:'I run', pt:'Eu corro', emoji:'🏃', key:'run' },
+  { tier:1, en:'I jump', pt:'Eu pulo', emoji:'🤸', key:'jump' },
+  { tier:1, en:'I play', pt:'Eu brinco', emoji:'⚽', key:'play' },
+  { tier:1, en:'I sing', pt:'Eu canto', emoji:'🎤', key:'sing' },
+  { tier:1, en:'I swim', pt:'Eu nado', emoji:'🏊', key:'swim' },
+  { tier:1, en:'I dance', pt:'Eu danço', emoji:'💃', key:'dance' },
+  { tier:1, en:'I walk', pt:'Eu ando', emoji:'🚶', key:'walk' },
+  { tier:1, en:'I eat', pt:'Eu como', emoji:'🍽️', key:'eat' },
+  { tier:1, en:'I drink', pt:'Eu bebo', emoji:'🥤', key:'drink' },
+  { tier:1, en:'I sleep', pt:'Eu durmo', emoji:'🛌', key:'sleep' },
+  { tier:1, en:'Big dog', pt:'Cachorro grande', emoji:'🐶', key:'dog' },
+  { tier:1, en:'Red apple', pt:'Maçã vermelha', emoji:'🍎', key:'apple' },
+  { tier:1, en:'Red bird', pt:'Pássaro vermelho', emoji:'🦜', key:'bird' },
+  { tier:1, en:'Blue fish', pt:'Peixe azul', emoji:'🐟', key:'fish' },
+  { tier:1, en:'Yellow lion', pt:'Leão amarelo', emoji:'🦁', key:'lion' },
+  { tier:1, en:'Green monkey', pt:'Macaco verde', emoji:'🐒', key:'monkey' },
+  { tier:1, en:'Purple elephant', pt:'Elefante roxo', emoji:'🐘', key:'elephant' },
+  { tier:1, en:'Orange rabbit', pt:'Coelho laranja', emoji:'🐰', key:'rabbit' },
 
   // tier 2 — 3-4 words
-  { tier:2, en:'I am happy', pt:'Eu estou feliz', emoji:'😀' },
-  { tier:2, en:'I am sad', pt:'Eu estou triste', emoji:'😢' },
-  { tier:2, en:'I am tired', pt:'Eu estou cansada', emoji:'😴' },
-  { tier:2, en:'I am angry', pt:'Eu estou brava', emoji:'😠' },
-  { tier:2, en:'I am scared', pt:'Eu estou assustada', emoji:'😱' },
-  { tier:2, en:'I am surprised', pt:'Eu estou surpresa', emoji:'😲' },
-  { tier:2, en:'I like cats', pt:'Eu gosto de gatos', emoji:'🐱' },
-  { tier:2, en:'I like dogs', pt:'Eu gosto de cachorros', emoji:'🐶' },
-  { tier:2, en:'I like birds', pt:'Eu gosto de pássaros', emoji:'🦜' },
-  { tier:2, en:'I like fish', pt:'Eu gosto de peixes', emoji:'🐟' },
-  { tier:2, en:'I have a dog', pt:'Eu tenho um cachorro', emoji:'🐶' },
-  { tier:2, en:'I have a cat', pt:'Eu tenho um gato', emoji:'🐱' },
-  { tier:2, en:'I have a bird', pt:'Eu tenho um pássaro', emoji:'🦜' },
-  { tier:2, en:'I have a rabbit', pt:'Eu tenho um coelho', emoji:'🐰' },
-  { tier:2, en:'I can run fast', pt:'Eu consigo correr rápido', emoji:'🏃' },
-  { tier:2, en:'I can swim well', pt:'Eu consigo nadar bem', emoji:'🏊' },
-  { tier:2, en:'I can sing well', pt:'Eu consigo cantar bem', emoji:'🎤' },
-  { tier:2, en:'I can jump high', pt:'Eu consigo pular alto', emoji:'🤸' },
-  { tier:2, en:'My mom is happy', pt:'Minha mãe está feliz', emoji:'👩' },
-  { tier:2, en:'My dad is tired', pt:'Meu pai está cansado', emoji:'👨' },
+  { tier:2, en:'I am happy', pt:'Eu estou feliz', emoji:'😀', key:'happy' },
+  { tier:2, en:'I am sad', pt:'Eu estou triste', emoji:'😢', key:'sad' },
+  { tier:2, en:'I am tired', pt:'Eu estou cansada', emoji:'😴', key:'tired' },
+  { tier:2, en:'I am angry', pt:'Eu estou brava', emoji:'😠', key:'angry' },
+  { tier:2, en:'I am scared', pt:'Eu estou assustada', emoji:'😱', key:'scared' },
+  { tier:2, en:'I am surprised', pt:'Eu estou surpresa', emoji:'😲', key:'surprised' },
+  { tier:2, en:'I like cats', pt:'Eu gosto de gatos', emoji:'🐱', key:'cats' },
+  { tier:2, en:'I like dogs', pt:'Eu gosto de cachorros', emoji:'🐶', key:'dogs' },
+  { tier:2, en:'I like birds', pt:'Eu gosto de pássaros', emoji:'🦜', key:'birds' },
+  { tier:2, en:'I like fish', pt:'Eu gosto de peixes', emoji:'🐟', key:'fish' },
+  { tier:2, en:'I have a dog', pt:'Eu tenho um cachorro', emoji:'🐶', key:'dog' },
+  { tier:2, en:'I have a cat', pt:'Eu tenho um gato', emoji:'🐱', key:'cat' },
+  { tier:2, en:'I have a bird', pt:'Eu tenho um pássaro', emoji:'🦜', key:'bird' },
+  { tier:2, en:'I have a rabbit', pt:'Eu tenho um coelho', emoji:'🐰', key:'rabbit' },
+  { tier:2, en:'I can run fast', pt:'Eu consigo correr rápido', emoji:'🏃', key:'run' },
+  { tier:2, en:'I can swim well', pt:'Eu consigo nadar bem', emoji:'🏊', key:'swim' },
+  { tier:2, en:'I can sing well', pt:'Eu consigo cantar bem', emoji:'🎤', key:'sing' },
+  { tier:2, en:'I can jump high', pt:'Eu consigo pular alto', emoji:'🤸', key:'jump' },
+  { tier:2, en:'My mom is happy', pt:'Minha mãe está feliz', emoji:'😀', key:'happy' },
+  { tier:2, en:'My dad is tired', pt:'Meu pai está cansado', emoji:'😴', key:'tired' },
 
   // tier 3 — 5+ words
-  { tier:3, en:'I like the red apple', pt:'Eu gosto da maçã vermelha', emoji:'🍎' },
-  { tier:3, en:'The big dog can run', pt:'O cachorro grande pode correr', emoji:'🐶' },
-  { tier:3, en:'I am very happy today', pt:'Eu estou muito feliz hoje', emoji:'😀' },
-  { tier:3, en:'I like to eat cake', pt:'Eu gosto de comer bolo', emoji:'🍰' },
-  { tier:3, en:'My mom is very happy', pt:'Minha mãe está muito feliz', emoji:'👩' },
-  { tier:3, en:'I like the yellow sun', pt:'Eu gosto do sol amarelo', emoji:'☀️' },
-  { tier:3, en:'The small cat can jump', pt:'O gato pequeno pode pular', emoji:'🐱' },
-  { tier:3, en:'I like to drink milk', pt:'Eu gosto de beber leite', emoji:'🥛' },
-  { tier:3, en:'My sister can sing well', pt:'Minha irmã consegue cantar bem', emoji:'👧' },
-  { tier:3, en:'I have a happy dog', pt:'Eu tenho um cachorro feliz', emoji:'🐶' },
-  { tier:3, en:'I like the blue fish', pt:'Eu gosto do peixe azul', emoji:'🐟' },
+  { tier:3, en:'I like the red apple', pt:'Eu gosto da maçã vermelha', emoji:'🍎', key:'apple' },
+  { tier:3, en:'The big dog can run', pt:'O cachorro grande pode correr', emoji:'🏃', key:'run' },
+  { tier:3, en:'I am very happy today', pt:'Eu estou muito feliz hoje', emoji:'😀', key:'happy' },
+  { tier:3, en:'I like to eat cake', pt:'Eu gosto de comer bolo', emoji:'🍰', key:'cake' },
+  { tier:3, en:'My mom is very happy', pt:'Minha mãe está muito feliz', emoji:'😀', key:'happy' },
+  { tier:3, en:'I like the yellow sun', pt:'Eu gosto do sol amarelo', emoji:'☀️', key:'sun' },
+  { tier:3, en:'The small cat can jump', pt:'O gato pequeno pode pular', emoji:'🤸', key:'jump' },
+  { tier:3, en:'I like to drink milk', pt:'Eu gosto de beber leite', emoji:'🥛', key:'milk' },
+  { tier:3, en:'My sister can sing well', pt:'Minha irmã consegue cantar bem', emoji:'🎤', key:'sing' },
+  { tier:3, en:'I have a happy dog', pt:'Eu tenho um cachorro feliz', emoji:'🐶', key:'dog' },
+  { tier:3, en:'I like the blue fish', pt:'Eu gosto do peixe azul', emoji:'🐟', key:'fish' },
 ];
 
 
@@ -1489,15 +1490,18 @@ function advanceAfterVoice(){
 let typingTarget = '';
 let typingBuffer = '';
 
-function getPhraseKeyWord(en){
-  const words = en.trim().split(' ');
+function getPhraseKeyWord(current){
+  // Prefer the explicit key field (guaranteed to match the shown emoji).
+  if(current.key) return current.key.toLowerCase().replace(/[^a-z]/g, '');
+  const words = current.en.trim().split(' ');
   return words[words.length - 1].toLowerCase().replace(/[^a-z]/g, '');
 }
 
 function showTypeStep(current){
   voiceStep.classList.remove('active');
-  typingTarget = getPhraseKeyWord(current.en);
+  typingTarget = getPhraseKeyWord(current);
   typingBuffer = typingTarget[0] || ''; // first letter pre-filled as a scaffold
+  document.getElementById('typeHint').textContent = current.emoji || '';
   document.getElementById('typeStatus').textContent = '';
   document.getElementById('typeStatus').className = 'voice-status';
   drawTypeSlots();
