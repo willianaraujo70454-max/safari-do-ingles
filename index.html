@@ -354,6 +354,7 @@
       <h1>Safari do <span>Inglês</span></h1>
     </div>
     <div class="header-stats">
+      <div class="stat-pill" id="offlineBadge" style="display:none; background:#FFF1D8; color:#B9791F;">📶 Offline</div>
       <button class="icon-btn" id="settingsBtn" title="Configurações">⚙️</button>
       <div class="stat-pill">⭐ <span id="starCount">0</span></div>
     </div>
@@ -868,6 +869,7 @@ let awaitingAnswer = true;
 let triedWrongThisWord = false;
 let phraseFirstTrySuccess = false;
 let voiceAttempts = 0;
+let voiceErrorStreak = 0;
 let onGameScreen = false;
 
 // ---------------- ELEMENTS ----------------
@@ -1357,6 +1359,7 @@ function showVoiceStep(){
   voiceStatus.textContent = '';
   voiceStatus.className = 'voice-status';
   voiceAttempts = 0;
+  voiceErrorStreak = 0;
   phraseFirstTrySuccess = false;
   const current = phaseWords[roundIndex];
   voiceTarget.textContent = current.en;
@@ -1381,6 +1384,13 @@ function showVoiceStep(){
     voiceHint.textContent = 'Vamos continuar mesmo assim!';
     micBtn.disabled = true;
     setTimeout(() => advanceAfterVoice(), 1400);
+  } else if(!navigator.onLine){
+    // Speech recognition needs an internet connection on most phones — don't force her to
+    // repeat forever when there's no signal. Skip this step gracefully instead.
+    voiceStatus.textContent = 'Sem internet agora — vamos pular a parte de falar 📶';
+    voiceHint.textContent = 'Você pode tentar de novo quando tiver internet!';
+    micBtn.disabled = true;
+    setTimeout(() => advanceAfterVoice(), 1600);
   } else {
     micBtn.disabled = false;
   }
@@ -1409,6 +1419,7 @@ micBtn.addEventListener('click', () => {
   let handled = false;
   recognition.onresult = (event) => {
     handled = true;
+    voiceErrorStreak = 0; // recognition worked technically, so any streak of connection failures resets
     const alternatives = event.results[0];
     const matchedText = checkAlternativesForMatch(alternatives, current.en, matcherFn);
     const bestGuess = alternatives[0].transcript;
@@ -1452,7 +1463,15 @@ micBtn.addEventListener('click', () => {
     if(handled) return;
     micBtn.classList.remove('listening');
     voiceAttempts++;
-    if(isPhrase){
+    voiceErrorStreak++;
+    // A run of technical failures usually means the connection dropped (recognition needs internet) —
+    // don't force endless retries even for phrases in that case, or she'd be stuck with no way out.
+    if(voiceErrorStreak >= MAX_VOICE_ATTEMPTS){
+      voiceStatus.textContent = 'Parece que a internet caiu — vamos continuar mesmo assim! 📶';
+      voiceStatus.className = 'voice-status bad';
+      if(!isPhrase) recordWordResult(current.en, false);
+      setTimeout(() => advanceAfterVoice(), 1500);
+    } else if(isPhrase){
       voiceStatus.textContent = 'Não peguei direito — tenta de novo até acertar! 🙂';
       voiceStatus.className = 'voice-status bad';
       micBtn.disabled = false;
@@ -2333,6 +2352,15 @@ document.getElementById('placementStartJourneyBtn').addEventListener('click', ()
   saveProgress();
   renderHome();
 });
+
+// ---------------- OFFLINE INDICATOR ----------------
+function updateOfflineBadge(){
+  const badge = document.getElementById('offlineBadge');
+  badge.style.display = navigator.onLine ? 'none' : 'flex';
+}
+window.addEventListener('online', updateOfflineBadge);
+window.addEventListener('offline', updateOfflineBadge);
+updateOfflineBadge();
 
 // ---------------- INIT ----------------
 loadSettings();
