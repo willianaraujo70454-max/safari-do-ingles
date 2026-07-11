@@ -96,6 +96,38 @@
 
   .next-unlock-note{ text-align:center; font-size:12px; font-weight:700; color:#9186b8; margin: 4px 0 0; }
 
+  .badges-row{
+    display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+    background: var(--white); border-radius:18px; padding:14px; box-shadow: var(--shadow); margin-bottom:14px;
+  }
+  .badge-pill{
+    font-size:26px; background:#FFF6DF; border-radius:12px; padding:6px 10px;
+  }
+  .hardest-words-card{
+    background: var(--white); border-radius:18px; padding:14px 16px; box-shadow: var(--shadow); margin-bottom:14px;
+  }
+  .hardest-words-card .hw-title{
+    font-family:'Baloo 2', sans-serif; font-weight:800; font-size:14px; color:var(--plum); margin:0 0 8px;
+  }
+  .hardest-words-card .hw-chip{
+    display:inline-block; background:#FFEFEC; color:var(--coral); font-weight:700; font-size:12px;
+    padding:4px 10px; border-radius:999px; margin:2px 4px 2px 0;
+  }
+
+  /* WEEKLY SUMMARY */
+  .weekly-stat-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:16px; }
+  .weekly-stat-card{
+    background: var(--white); border-radius:18px; padding:16px; text-align:center; box-shadow: var(--shadow);
+  }
+  .weekly-stat-card .ws-value{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:24px; color:var(--plum); }
+  .weekly-stat-card .ws-label{ font-size:11.5px; font-weight:700; color:#9186b8; margin-top:2px; }
+  .weekly-days-row{ display:flex; gap:6px; justify-content:space-between; margin-bottom:16px; }
+  .weekly-day{
+    flex:1; text-align:center; background: var(--white); border-radius:12px; padding:8px 2px; box-shadow: var(--shadow);
+  }
+  .weekly-day .wd-letter{ font-size:10px; font-weight:800; color:#9186b8; }
+  .weekly-day .wd-mark{ font-size:16px; margin-top:2px; }
+
   /* GAME */
   .level-heading{
     text-align:center; font-family:'Baloo 2', sans-serif; font-weight:700;
@@ -285,12 +317,34 @@
   #splashScreen h2{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:26px; color: white; text-shadow: 0 3px 0 rgba(0,0,0,0.15); margin:0; text-align:center; padding:0 20px; }
   @keyframes splashPop{ from{ transform: scale(0.5); opacity:0;} to{ transform: scale(1); opacity:1;} }
   @keyframes splashFade{ 0%{ opacity:1; } 75%{ opacity:1; } 100%{ opacity:0; visibility:hidden; pointer-events:none; } }
+
+  #tutorialOverlay{
+    position:fixed; inset:0; z-index:998; background: rgba(58,42,93,0.55);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .tutorial-card{
+    background: var(--white); border-radius:24px; padding:26px 22px; max-width:340px; width:100%;
+    box-shadow: 0 10px 0 rgba(0,0,0,0.15);
+  }
+  .tutorial-step{
+    font-family:'Baloo 2', sans-serif; font-weight:700; font-size:16px; color:var(--plum);
+    display:flex; align-items:center; gap:10px; margin:0 0 16px;
+  }
+  .tutorial-step span{ font-size:22px; flex:none; }
 </style>
 </head>
 <body>
 <div id="splashScreen">
   <img src="./icon-192.png" alt="Safari do Inglês">
   <h2 id="splashGreetingText">Olá!</h2>
+</div>
+<div id="tutorialOverlay" style="display:none;">
+  <div class="tutorial-card">
+    <p class="tutorial-step"><span>1️⃣</span> Toque na imagem certa</p>
+    <p class="tutorial-step"><span>2️⃣</span> Fale a palavra no microfone 🎤</p>
+    <p class="tutorial-step"><span>3️⃣</span> Ganhe estrelas e passe de fase! ⭐</p>
+    <button class="cta-btn" id="tutorialOkBtn">Entendi, vamos jogar! ▶</button>
+  </div>
 </div>
 <div id="app">
 
@@ -326,9 +380,14 @@
       <button class="cta-btn recess" id="homeRecessBtn" style="margin-top:8px;">🎮 Hora do recreio</button>
     </div>
 
+    <div id="badgesRow" style="display:none;"></div>
+    <div id="hardestWordsWrap" style="display:none;"></div>
+
     <p class="section-label">Categorias destravadas (jogar de novo)</p>
     <div class="unlocked-grid" id="unlockedGrid"></div>
     <p class="next-unlock-note" id="nextUnlockNote"></p>
+
+    <button class="btn secondary" id="weeklySummaryBtn" style="margin-top:14px;">📊 Resumo da semana</button>
 
     <p class="storage-note">O progresso fica salvo neste navegador do celular. Se limpar os dados do navegador ou trocar de aparelho, a jornada reinicia.</p>
   </section>
@@ -362,6 +421,46 @@
     </div>
   </section>
 
+  <!-- PLACEMENT TEST -->
+  <section class="screen" id="screen-placement-intro" style="align-items:center; justify-content:center; text-align:center; gap:14px;">
+    <div style="font-size:56px;">🧭</div>
+    <h2 style="font-family:'Baloo 2', sans-serif; font-size:22px; margin:0;">Qual é o nível do seu inglês?</h2>
+    <p style="color:#6b5b95; font-weight:700; max-width:300px; margin:0;">Vamos fazer um teste rápido (8 perguntinhas) pra começar no nível certo pra você!</p>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn primary" id="startPlacementBtn">Fazer teste rápido ▶</button>
+      <button class="btn secondary" id="skipPlacementBtn">Pular, começar do começo</button>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-placement-quiz">
+    <p class="level-heading">Teste de nível</p>
+    <div class="progress-row" id="placementProgressRow"></div>
+    <div class="word-card">
+      <p class="prompt-pt">Toque na imagem certa</p>
+      <p class="target-word" id="placementTargetWord">word</p>
+    </div>
+    <div class="options-grid" id="placementOptionsGrid"></div>
+    <div class="feedback-banner" id="placementFeedback"></div>
+  </section>
+
+  <section class="screen result-screen" id="screen-placement-result">
+    <div class="result-mascot" id="placementResultMascot">🎯</div>
+    <h2 id="placementResultTitle">Resultado do teste</h2>
+    <p id="placementResultText">Você acertou X de 8!</p>
+    <div class="btn-row">
+      <button class="btn primary" id="placementStartJourneyBtn">Começar jornada ▶</button>
+    </div>
+  </section>
+
+  <!-- WEEKLY SUMMARY -->
+  <section class="screen" id="screen-weekly">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+      <button class="back-btn" id="weeklyBackBtn">←</button>
+      <p class="level-heading" style="flex:1; margin:0;">Resumo da semana</p>
+    </div>
+    <div id="weeklyContent"></div>
+  </section>
+
   <!-- SETTINGS -->
   <section class="screen" id="screen-settings">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
@@ -390,6 +489,12 @@
       <label class="settings-label">Reiniciar jornada</label>
       <p class="settings-hint" style="margin-top:0;">Isso apaga todo o progresso (fases, estrelas, dificuldade) e recomeça do zero. Não afeta nome/foto/saudação.</p>
       <button class="btn secondary" id="resetProgressBtn">🔄 Reiniciar do zero</button>
+    </div>
+
+    <div class="settings-card">
+      <label class="settings-label">Teste de nível</label>
+      <p class="settings-hint" style="margin-top:0;">Refaça o teste rápido pra reajustar em qual fase e dificuldade começar.</p>
+      <button class="btn secondary" id="retakePlacementBtn">🧭 Refazer teste de nível</button>
     </div>
   </section>
 
@@ -593,7 +698,7 @@ function loadSettings(){
     if(raw) settings = JSON.parse(raw);
   }catch(e){ console.warn('Could not read settings', e); }
   if(!settings){
-    settings = { name:'Pietra', gender:'menina', customGreeting:'' };
+    settings = { name:'', gender:'menina', customGreeting:'' };
     saveSettings();
   }
 }
@@ -605,8 +710,11 @@ function getGreetingText(){
   if(settings.customGreeting && settings.customGreeting.trim()){
     return settings.customGreeting.trim();
   }
-  const pronoun = settings.gender === 'menino' ? 'seu lindo' : 'sua linda';
-  return `Olá ${settings.name || 'querido(a)'}, ${pronoun}!`;
+  if(settings.name && settings.name.trim()){
+    const pronoun = settings.gender === 'menino' ? 'seu lindo' : 'sua linda';
+    return `Olá ${settings.name.trim()}, ${pronoun}!`;
+  }
+  return '';
 }
 
 // ---------------- STORAGE ----------------
@@ -624,10 +732,17 @@ function loadProgress(){
       difficultyLevel: MIN_DIFFICULTY,
       totalStars: 0,
       dailySeconds: {},
-      completedDates: []
+      completedDates: [],
+      wordStats: {},
+      badges: [],
+      tutorialSeen: false,
+      placementTestDone: false
     };
     saveProgress();
   }
+  if(!progress.wordStats) progress.wordStats = {};
+  if(!progress.badges) progress.badges = [];
+  if(progress.placementTestDone === undefined) progress.placementTestDone = false;
 }
 function saveProgress(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
@@ -639,9 +754,27 @@ function resetProgress(){
     difficultyLevel: MIN_DIFFICULTY,
     totalStars: 0,
     dailySeconds: {},
-    completedDates: []
+    completedDates: [],
+    wordStats: {},
+    badges: [],
+    tutorialSeen: progress ? progress.tutorialSeen : false,
+    placementTestDone: false
   };
   saveProgress();
+}
+function recordWordResult(en, success){
+  const stat = progress.wordStats[en] || { attempts:0, misses:0 };
+  stat.attempts++;
+  if(!success) stat.misses++;
+  progress.wordStats[en] = stat;
+  saveProgress();
+}
+function getHardestWords(limit){
+  return Object.entries(progress.wordStats)
+    .filter(([, s]) => s.attempts >= 2 && s.misses > 0)
+    .sort((a, b) => (b[1].misses / b[1].attempts) - (a[1].misses / a[1].attempts))
+    .slice(0, limit || 5)
+    .map(([en]) => en);
 }
 function getTodaySeconds(){ return progress.dailySeconds[todayStr()] || 0; }
 function getStreak(){
@@ -719,6 +852,10 @@ const screens = {
   result: document.getElementById('screen-result'),
   minigames: document.getElementById('screen-minigames'),
   settings: document.getElementById('screen-settings'),
+  weekly: document.getElementById('screen-weekly'),
+  placementIntro: document.getElementById('screen-placement-intro'),
+  placementQuiz: document.getElementById('screen-placement-quiz'),
+  placementResult: document.getElementById('screen-placement-result'),
 };
 const starCountEl = document.getElementById('starCount');
 const dayNumLabel = document.getElementById('dayNumLabel');
@@ -902,11 +1039,115 @@ function renderHome(){
     nextUnlockNote.textContent = '🎉 Todas as categorias já foram destravadas!';
   }
 
+  const badgesRow = document.getElementById('badgesRow');
+  if(progress.badges.length){
+    badgesRow.style.display = 'flex';
+    badgesRow.className = 'badges-row';
+    badgesRow.innerHTML = progress.badges
+      .map((phaseNum) => BADGE_MILESTONES.find((b) => b.phase === phaseNum))
+      .filter(Boolean)
+      .map((b) => `<span class="badge-pill" title="${b.name}">${b.emoji}</span>`)
+      .join('');
+  } else {
+    badgesRow.style.display = 'none';
+  }
+
+  const hardestWordsWrap = document.getElementById('hardestWordsWrap');
+  const hardestWords = getHardestWords(5);
+  if(hardestWords.length >= 3){
+    hardestWordsWrap.style.display = 'block';
+    const allWordsLookup = CATEGORIES.flatMap((c) => c.words);
+    hardestWordsWrap.innerHTML = `
+      <div class="hardest-words-card">
+        <p class="hw-title">🎯 Vamos praticar essas palavras?</p>
+        ${hardestWords.map((en) => {
+          const w = allWordsLookup.find((x) => x.en === en);
+          return `<span class="hw-chip">${w ? w.emoji : ''} ${en}</span>`;
+        }).join('')}
+        <button class="btn secondary" id="hardestReviewBtn" style="margin-top:10px;">Revisar palavras difíceis</button>
+      </div>
+    `;
+    document.getElementById('hardestReviewBtn').addEventListener('click', startHardestWordsReview);
+  } else {
+    hardestWordsWrap.style.display = 'none';
+  }
+
   refreshStarCount();
   showScreen('home');
 }
 
+function startHardestWordsReview(){
+  const hardestEns = getHardestWords(6);
+  const allWordsLookup = CATEGORIES.flatMap((c) => c.words);
+  const reviewWords = hardestEns.map((en) => allWordsLookup.find((w) => w.en === en)).filter(Boolean);
+  if(!reviewWords.length) return;
+  currentPhaseMode = 'word';
+  currentCategory = { id:'review', name:'Palavras difíceis', words: reviewWords };
+  currentReviewCategory = currentCategory;
+  currentOptionsCount = Math.min(progress.difficultyLevel, MAX_DIFFICULTY, reviewWords.length);
+  currentRate = getWordSpeechRate(Math.min(progress.difficultyLevel, MAX_DIFFICULTY));
+  phaseWords = shuffle(reviewWords).map((w) => ({...w, type:'word'}));
+  levelHeading.textContent = 'Revisão · Palavras difíceis';
+  startPhase._isMain = false;
+  roundIndex = 0;
+  roundCorrectFirstTry = 0;
+  buildProgress();
+  showScreen('game');
+  updateMiniTimer();
+  loadWord();
+}
+
 playTodayBtn.addEventListener('click', () => startPhase(true));
+
+// ---------------- WEEKLY SUMMARY ----------------
+document.getElementById('weeklySummaryBtn').addEventListener('click', renderWeeklySummary);
+document.getElementById('weeklyBackBtn').addEventListener('click', () => renderHome());
+
+function renderWeeklySummary(){
+  const dayLetters = ['D','S','T','Q','Q','S','S'];
+  const days = [];
+  let totalSecondsWeek = 0;
+  for(let i = 6; i >= 0; i--){
+    const d = new Date(Date.now() - i * 86400000);
+    const key = d.toISOString().slice(0,10);
+    const secs = progress.dailySeconds[key] || 0;
+    totalSecondsWeek += secs;
+    days.push({ letter: dayLetters[d.getDay()], secs, isToday: i === 0 });
+  }
+  const streak = getStreak();
+  const wordsLearned = Object.keys(progress.wordStats).length;
+  const hardest = getHardestWords(3);
+  const allWordsLookup = CATEGORIES.flatMap((c) => c.words);
+
+  const content = document.getElementById('weeklyContent');
+  content.innerHTML = `
+    <div class="weekly-stat-grid">
+      <div class="weekly-stat-card"><div class="ws-value">${fmtTime(totalSecondsWeek)}</div><div class="ws-label">Praticado nos últimos 7 dias</div></div>
+      <div class="weekly-stat-card"><div class="ws-value">🔥 ${streak}</div><div class="ws-label">Dias seguidos</div></div>
+      <div class="weekly-stat-card"><div class="ws-value">⭐ ${progress.totalStars}</div><div class="ws-label">Estrelas no total</div></div>
+      <div class="weekly-stat-card"><div class="ws-value">📖 ${wordsLearned}</div><div class="ws-label">Palavras praticadas</div></div>
+    </div>
+    <p class="section-label">Dias praticados</p>
+    <div class="weekly-days-row">
+      ${days.map((d) => `
+        <div class="weekly-day" style="${d.isToday ? 'outline:2px solid var(--sun);' : ''}">
+          <div class="wd-letter">${d.letter}</div>
+          <div class="wd-mark">${d.secs >= 60 ? '✅' : d.secs > 0 ? '🟡' : '⚪'}</div>
+        </div>
+      `).join('')}
+    </div>
+    ${hardest.length ? `
+      <p class="section-label">Palavras pra praticar mais</p>
+      <div class="hardest-words-card">
+        ${hardest.map((en) => {
+          const w = allWordsLookup.find((x) => x.en === en);
+          return `<span class="hw-chip">${w ? w.emoji : ''} ${en}</span>`;
+        }).join('')}
+      </div>
+    ` : `<p class="settings-hint" style="text-align:center;">Ainda não há palavras difíceis registradas — continue praticando! 🎉</p>`}
+  `;
+  showScreen('weekly');
+}
 
 // ---------------- GAME LOGIC ----------------
 function buildPhaseWordPool(featuredCat){
@@ -1043,9 +1284,15 @@ function handleAnswer(isCorrect, btnEl){
   if(isCorrect){
     awaitingAnswer = false;
     btnEl.classList.add('correct');
-    feedback.textContent = '🎉 Muito bem! / Very good!';
+    feedback.textContent = randomPraise();
     feedback.className = 'feedback-banner show good';
-    if(!triedWrongThisWord) burstConfetti();
+    const current = phaseWords[roundIndex];
+    if(current.type !== 'phrase') recordWordResult(current.en, !triedWrongThisWord);
+    if(!triedWrongThisWord){
+      burstConfetti();
+      playSuccessSound();
+      vibrateSuccess();
+    }
     setTimeout(() => { showVoiceStep(); }, 900);
   } else {
     btnEl.classList.add('wrong');
@@ -1053,6 +1300,8 @@ function handleAnswer(isCorrect, btnEl){
     triedWrongThisWord = true;
     feedback.textContent = 'Tenta de novo! / Try again!';
     feedback.className = 'feedback-banner show bad';
+    playErrorSound();
+    vibrateError();
   }
 }
 
@@ -1110,7 +1359,7 @@ micBtn.addEventListener('click', () => {
   const isPhrase = current.type === 'phrase';
   const matcherFn = isPhrase ? isClosePhraseMatch : isCloseMatch;
   micBtn.classList.add('listening');
-  voiceStatus.textContent = 'Ouvindo... 👂';
+  voiceStatus.textContent = navigator.onLine ? 'Ouvindo... 👂' : 'Ouvindo... 👂 (sem internet, pode falhar 📶)';
   voiceStatus.className = 'voice-status';
   micBtn.disabled = true;
 
@@ -1128,17 +1377,24 @@ micBtn.addEventListener('click', () => {
       progress.totalStars++;
       refreshStarCount();
       burstConfetti();
+      playSuccessSound();
+      vibrateSuccess();
+      if(!isPhrase) recordWordResult(current.en, voiceAttempts === 0);
       micBtn.classList.remove('listening');
       setTimeout(() => advanceAfterVoice(), 1200);
     } else {
       voiceAttempts++;
       micBtn.classList.remove('listening');
+      playErrorSound();
+      vibrateError();
       if(voiceAttempts >= MAX_VOICE_ATTEMPTS){
         voiceStatus.textContent = `Quase lá! A gente pratica essa de novo depois 💪`;
         voiceStatus.className = 'voice-status bad';
+        if(!isPhrase) recordWordResult(current.en, false);
         setTimeout(() => advanceAfterVoice(), 1400);
       } else {
-        voiceStatus.textContent = `Quase! Ouvi "${bestGuess}" — tenta de novo 🙂`;
+        const firstBit = isPhrase ? current.en.split(' ')[0] : current.en[0].toUpperCase();
+        voiceStatus.textContent = `Quase! Ouvi "${bestGuess}" — tenta de novo 🙂 (dica: começa com "${firstBit}")`;
         voiceStatus.className = 'voice-status bad';
         micBtn.disabled = false;
       }
@@ -1177,6 +1433,27 @@ function advanceAfterVoice(){
   loadWord();
 }
 
+// ---------------- BADGES ----------------
+const BADGE_MILESTONES = [
+  { phase:5,  emoji:'🥉', name:'Primeiras 5 fases!' },
+  { phase:10, emoji:'🥈', name:'10 fases completas!' },
+  { phase:20, emoji:'🥇', name:'20 fases completas!' },
+  { phase:30, emoji:'🏅', name:'30 fases completas!' },
+  { phase:50, emoji:'🏆', name:'Meio caminho andado — 50 fases!' },
+  { phase:75, emoji:'👑', name:'75 fases completas!' },
+  { phase:100,emoji:'🌟', name:'100 fases — Mestre do Inglês!' },
+];
+function checkAndAwardBadges(completedPhase){
+  const newly = [];
+  BADGE_MILESTONES.forEach((b) => {
+    if(completedPhase === b.phase && !progress.badges.includes(b.phase)){
+      progress.badges.push(b.phase);
+      newly.push(b);
+    }
+  });
+  return newly;
+}
+
 function finishPhase(){
   const isMain = !!startPhase._isMain;
   const total = phaseWords.length;
@@ -1210,11 +1487,17 @@ function finishPhase(){
         progress.difficultyLevel++;
         diffMsg = 'Você mandou muito bem — vamos aumentar o desafio! 🚀';
       }
+      const completedPhase = progress.phaseNumber;
       progress.phaseNumber++;
+      const newBadges = checkAndAwardBadges(completedPhase);
       saveProgress();
       resultTitle.textContent = `Fase concluída! 🏆`;
-      resultMascot.textContent = '🏆';
+      resultMascot.textContent = newBadges.length ? newBadges[0].emoji : '🏆';
       resultText.textContent = `Você acertou ${roundCorrectFirstTry} de ${total}. ${diffMsg}`;
+      if(newBadges.length){
+        resultText.textContent += ` 🎖️ Novo emblema: "${newBadges[0].name}"!`;
+        playPhraseWinSound();
+      }
       continueBtn.textContent = 'Próxima fase ▶';
       continueBtn.onclick = () => startPhase(true);
     }
@@ -1222,7 +1505,8 @@ function finishPhase(){
     saveProgress();
     resultTitle.textContent = 'Muito bem!';
     resultMascot.textContent = '🎉';
-    resultText.textContent = `Você revisou ${currentReviewCategory.name} e acertou ${roundCorrectFirstTry} de ${total}!`;
+    const reviewLabel = currentReviewCategory.id === 'review' ? 'as palavras difíceis' : currentReviewCategory.name;
+    resultText.textContent = `Você revisou ${reviewLabel} e acertou ${roundCorrectFirstTry} de ${total}!`;
     continueBtn.textContent = 'Jogar de novo';
     continueBtn.onclick = () => startPhase(false, currentReviewCategory);
   }
@@ -1244,6 +1528,56 @@ function burstConfetti(){
     setTimeout(() => el.remove(), 3000);
   }
 }
+
+// ---------------- SOUND EFFECTS (generated tones, no audio files needed) ----------------
+let sharedAudioCtx = null;
+function getAudioCtx(){
+  const Ctor = window.AudioContext || window.webkitAudioContext;
+  if(!Ctor) return null;
+  if(!sharedAudioCtx) sharedAudioCtx = new Ctor();
+  if(sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume().catch(() => {});
+  return sharedAudioCtx;
+}
+function playTone(freqs, durationMs, type){
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  const now = ctx.currentTime;
+  freqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    const start = now + i * (durationMs / 1000) * 0.9;
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + durationMs / 1000);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + durationMs / 1000 + 0.02);
+  });
+}
+function playSuccessSound(){ playTone([523, 659, 784], 140, 'sine'); }
+function playErrorSound(){ playTone([220, 175], 160, 'sine'); }
+function playPhraseWinSound(){ playTone([523, 659, 784, 1047], 130, 'sine'); }
+
+// ---------------- HAPTIC FEEDBACK ----------------
+function vibrateDevice(pattern){
+  try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){ /* ignore */ }
+}
+function vibrateSuccess(){ vibrateDevice(40); }
+function vibrateError(){ vibrateDevice([30,60,30]); }
+
+// ---------------- VARIED PRAISE MESSAGES ----------------
+const PRAISE_MESSAGES = [
+  '🎉 Muito bem! / Very good!',
+  '🌟 Isso aí! / That\'s it!',
+  '👏 Mandou bem! / Well done!',
+  '🥳 Perfeito! / Perfect!',
+  '💪 Você conseguiu! / You got it!',
+  '✨ Arrasou! / Awesome!',
+];
+function randomPraise(){ return PRAISE_MESSAGES[Math.floor(Math.random()*PRAISE_MESSAGES.length)]; }
 
 document.getElementById('backBtn').addEventListener('click', () => { saveProgress(); renderHome(); });
 
@@ -1593,21 +1927,180 @@ resetProgressBtn.addEventListener('click', () => {
     renderHome();
   }
 });
+document.getElementById('retakePlacementBtn').addEventListener('click', () => {
+  showScreen('placementIntro');
+});
+
+// ---------------- PLACEMENT TEST ----------------
+const PLACEMENT_QUESTION_COUNT = 8;
+let placementQuestions = [];
+let placementIndex = 0;
+let placementCorrect = 0;
+let placementAwaiting = true;
+let pendingPlacementResult = null;
+
+function buildPlacementQuestions(){
+  // Sample words spread across the whole content bank, from easiest to hardest categories.
+  const sampleIdx = [0, 2, 4, 6, 8, 11, 14, 18];
+  return sampleIdx.map((idx) => {
+    const cat = CATEGORIES[Math.min(idx, CATEGORIES.length - 1)];
+    const word = cat.words[Math.floor(Math.random() * cat.words.length)];
+    return { ...word, catId: cat.id };
+  });
+}
+
+function startPlacementTest(){
+  placementQuestions = buildPlacementQuestions();
+  placementIndex = 0;
+  placementCorrect = 0;
+  showScreen('placementQuiz');
+  buildPlacementProgress();
+  loadPlacementQuestion();
+}
+
+function buildPlacementProgress(){
+  const row = document.getElementById('placementProgressRow');
+  row.innerHTML = '';
+  placementQuestions.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot'; d.id = 'pdot-' + i;
+    row.appendChild(d);
+  });
+  updatePlacementProgress();
+}
+function updatePlacementProgress(){
+  placementQuestions.forEach((_, i) => {
+    const d = document.getElementById('pdot-' + i);
+    d.classList.remove('current','done');
+    if(i < placementIndex) d.classList.add('done');
+    else if(i === placementIndex) d.classList.add('current');
+  });
+}
+
+function loadPlacementQuestion(){
+  if(placementIndex >= placementQuestions.length){
+    finishPlacementTest();
+    return;
+  }
+  placementAwaiting = true;
+  const feedback = document.getElementById('placementFeedback');
+  feedback.classList.remove('show','good','bad');
+  updatePlacementProgress();
+
+  const current = placementQuestions[placementIndex];
+  document.getElementById('placementTargetWord').textContent = current.en;
+
+  const cat = CATEGORIES.find((c) => c.id === current.catId);
+  let pool = cat.words.filter((w) => w.en !== current.en);
+  pool = shuffle(pool).slice(0, 3);
+  if(pool.length < 3){
+    const extra = CATEGORIES.filter((c) => c.id !== cat.id).flatMap((c) => c.words).filter((w) => w.en !== current.en);
+    pool = pool.concat(shuffle(extra).slice(0, 3 - pool.length));
+  }
+  const options = shuffle([current, ...pool]);
+
+  const grid = document.getElementById('placementOptionsGrid');
+  grid.innerHTML = '';
+  options.forEach((opt) => {
+    const b = document.createElement('button');
+    b.className = 'opt-btn';
+    b.textContent = opt.emoji;
+    b.addEventListener('click', () => handlePlacementAnswer(opt.en === current.en, b));
+    grid.appendChild(b);
+  });
+
+  setTimeout(() => speak(current.en, 0.85), 300);
+}
+
+function handlePlacementAnswer(isCorrect, btnEl){
+  if(!placementAwaiting) return;
+  placementAwaiting = false;
+  const feedback = document.getElementById('placementFeedback');
+  if(isCorrect){
+    btnEl.classList.add('correct');
+    feedback.textContent = randomPraise();
+    feedback.className = 'feedback-banner show good';
+    placementCorrect++;
+    playSuccessSound();
+    vibrateSuccess();
+  } else {
+    btnEl.classList.add('wrong');
+    feedback.textContent = 'Tudo bem, vamos pra próxima!';
+    feedback.className = 'feedback-banner show bad';
+    playErrorSound();
+    vibrateError();
+  }
+  setTimeout(() => { placementIndex++; loadPlacementQuestion(); }, 900);
+}
+
+function finishPlacementTest(){
+  const scorePct = placementCorrect / placementQuestions.length;
+  let startPhaseNum, startDiff, level;
+  if(scorePct >= 0.85){
+    startDiff = 4; startPhaseNum = 10; level = 'avançado';
+  } else if(scorePct >= 0.5){
+    startDiff = 3; startPhaseNum = 5; level = 'intermediário';
+  } else {
+    startDiff = MIN_DIFFICULTY; startPhaseNum = 1; level = 'iniciante';
+  }
+  pendingPlacementResult = { startPhaseNum, startDiff };
+
+  document.getElementById('placementResultTitle').textContent = `Nível ${level}! 🎯`;
+  document.getElementById('placementResultText').textContent =
+    `Você acertou ${placementCorrect} de ${placementQuestions.length}. Vamos começar na Fase ${startPhaseNum}!`;
+  showScreen('placementResult');
+}
+
+document.getElementById('startPlacementBtn').addEventListener('click', startPlacementTest);
+document.getElementById('skipPlacementBtn').addEventListener('click', () => {
+  progress.placementTestDone = true;
+  saveProgress();
+  renderHome();
+});
+document.getElementById('placementStartJourneyBtn').addEventListener('click', () => {
+  if(pendingPlacementResult){
+    progress.phaseNumber = pendingPlacementResult.startPhaseNum;
+    progress.difficultyLevel = pendingPlacementResult.startDiff;
+  }
+  progress.placementTestDone = true;
+  saveProgress();
+  renderHome();
+});
 
 // ---------------- INIT ----------------
 loadSettings();
 loadProgress();
 renderHome();
 
-document.getElementById('splashGreetingText').textContent = getGreetingText();
-setTimeout(() => {
-  speak(getGreetingText(), 0.95, 'pt-BR');
-}, 400);
+const greetingText = getGreetingText();
+const splashGreetingEl = document.getElementById('splashGreetingText');
+if(greetingText){
+  splashGreetingEl.textContent = greetingText;
+  setTimeout(() => {
+    speak(greetingText, 0.95, 'pt-BR');
+  }, 400);
+} else {
+  splashGreetingEl.style.display = 'none';
+}
 
 setTimeout(() => {
   const splash = document.getElementById('splashScreen');
   if(splash) splash.remove();
+  if(!progress.tutorialSeen){
+    document.getElementById('tutorialOverlay').style.display = 'flex';
+  } else if(!progress.placementTestDone){
+    showScreen('placementIntro');
+  }
 }, 2700);
+
+document.getElementById('tutorialOkBtn').addEventListener('click', () => {
+  progress.tutorialSeen = true;
+  saveProgress();
+  document.getElementById('tutorialOverlay').style.display = 'none';
+  if(!progress.placementTestDone){
+    showScreen('placementIntro');
+  }
+});
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
