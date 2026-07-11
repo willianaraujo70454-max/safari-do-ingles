@@ -419,6 +419,14 @@
       <p class="voice-status" id="voiceStatus"></p>
       <p class="voice-hint" id="voiceHint">Toque no microfone e repita a palavra</p>
     </div>
+
+    <div class="voice-step" id="typeStep" style="display:none;">
+      <p class="voice-instructions">Agora escreva a palavra:</p>
+      <div class="guess-word" id="typeSlots" style="margin:14px 0;"></div>
+      <div class="guess-keyboard" id="typeKeyboard"></div>
+      <button class="btn secondary" id="typeBackspaceBtn" style="margin-top:14px; max-width:160px;">⌫ Apagar</button>
+      <p class="voice-status" id="typeStatus"></p>
+    </div>
   </section>
 
   <!-- PLACEMENT TEST -->
@@ -1253,6 +1261,7 @@ function loadWord(){
   awaitingAnswer = true;
   triedWrongThisWord = false;
   feedback.classList.remove('show','good','bad');
+  document.getElementById('typeStep').style.display = 'none';
   updateProgress();
 
   const current = phaseWords[roundIndex];
@@ -1466,11 +1475,91 @@ function advanceAfterVoice(){
   const current = phaseWords[roundIndex];
   if(current.type === 'phrase'){
     if(phraseFirstTrySuccess) roundCorrectFirstTry++;
+    showTypeStep(current);
   } else {
     if(!triedWrongThisWord) roundCorrectFirstTry++;
+    roundIndex++;
+    loadWord();
   }
-  roundIndex++;
-  loadWord();
+}
+
+// ---------------- TYPE STEP (spelling, phrases only) ----------------
+let typingTarget = '';
+let typingBuffer = '';
+
+function getPhraseKeyWord(en){
+  const words = en.trim().split(' ');
+  return words[words.length - 1].toLowerCase().replace(/[^a-z]/g, '');
+}
+
+function showTypeStep(current){
+  voiceStep.classList.remove('active');
+  typingTarget = getPhraseKeyWord(current.en);
+  typingBuffer = typingTarget[0] || ''; // first letter pre-filled as a scaffold
+  document.getElementById('typeStatus').textContent = '';
+  document.getElementById('typeStatus').className = 'voice-status';
+  drawTypeSlots();
+  drawTypeKeyboard();
+  document.getElementById('typeStep').style.display = 'flex';
+}
+
+function drawTypeSlots(){
+  const wrap = document.getElementById('typeSlots');
+  wrap.innerHTML = '';
+  for(let i = 0; i < typingTarget.length; i++){
+    const slot = document.createElement('div');
+    slot.className = 'guess-letter-slot';
+    slot.textContent = (typingBuffer[i] || '').toUpperCase();
+    wrap.appendChild(slot);
+  }
+}
+function drawTypeKeyboard(){
+  const kb = document.getElementById('typeKeyboard');
+  kb.innerHTML = '';
+  'abcdefghijklmnopqrstuvwxyz'.split('').forEach((ch) => {
+    const btn = document.createElement('button');
+    btn.className = 'guess-key';
+    btn.textContent = ch.toUpperCase();
+    btn.addEventListener('click', () => handleTypeLetter(ch));
+    kb.appendChild(btn);
+  });
+}
+function handleTypeLetter(ch){
+  if(typingBuffer.length >= typingTarget.length) return;
+  typingBuffer += ch;
+  drawTypeSlots();
+  if(typingBuffer.length === typingTarget.length) checkTyping();
+}
+document.getElementById('typeBackspaceBtn').addEventListener('click', () => {
+  if(typingBuffer.length > 1){ // keep the first-letter hint always in place
+    typingBuffer = typingBuffer.slice(0, -1);
+    drawTypeSlots();
+  }
+});
+function checkTyping(){
+  const statusEl = document.getElementById('typeStatus');
+  if(typingBuffer.toLowerCase() === typingTarget.toLowerCase()){
+    statusEl.textContent = 'Perfeito! Você escreveu certinho! 🎉';
+    statusEl.className = 'voice-status good';
+    burstConfetti();
+    playSuccessSound();
+    vibrateSuccess();
+    setTimeout(() => {
+      document.getElementById('typeStep').style.display = 'none';
+      roundIndex++;
+      loadWord();
+    }, 1100);
+  } else {
+    statusEl.textContent = 'Quase! Vamos tentar de novo até acertar 💪';
+    statusEl.className = 'voice-status bad';
+    playErrorSound();
+    vibrateError();
+    setTimeout(() => {
+      typingBuffer = typingTarget[0] || '';
+      drawTypeSlots();
+      statusEl.textContent = '';
+    }, 1000);
+  }
 }
 
 // ---------------- BADGES ----------------
