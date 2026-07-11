@@ -982,11 +982,13 @@ function speakWithContext(ptText, enText, enRate){
     speakRaw(enText, enRate, 'en-US');
   };
   setTimeout(() => {
-    speakRaw(`Como eu digo "${ptText}" em inglês? Assim:`, 0.95, 'pt-BR', () => {
-      setTimeout(goToEnglish, 250);
+    // Just the Portuguese word/phrase itself, then a short pause, then English —
+    // no repeated sentence template, so it doesn't get tiresome.
+    speakRaw(ptText, 0.9, 'pt-BR', () => {
+      setTimeout(goToEnglish, 350);
     });
     // Safety net: some browsers never fire onend for pt-BR if the voice is missing — don't get stuck silent.
-    setTimeout(goToEnglish, 3500);
+    setTimeout(goToEnglish, 3000);
   }, 60);
 }
 
