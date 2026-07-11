@@ -379,16 +379,47 @@ const CATEGORIES = [
   ]},
 ];
 
+// ---------------- PHRASE BANK (unlocked at higher difficulty) ----------------
+// tier 1: 2 words · tier 2: 3-4 words · tier 3: 5+ words
+const PHRASES = [
+  { tier:1, en:'I run', emoji:'🏃' },
+  { tier:1, en:'I jump', emoji:'🤸' },
+  { tier:1, en:'I play', emoji:'⚽' },
+  { tier:1, en:'I sing', emoji:'🎤' },
+  { tier:1, en:'I swim', emoji:'🏊' },
+  { tier:1, en:'I dance', emoji:'💃' },
+  { tier:1, en:'I walk', emoji:'🚶' },
+  { tier:1, en:'Big dog', emoji:'🐶' },
+  { tier:1, en:'Red apple', emoji:'🍎' },
+  { tier:2, en:'I am happy', emoji:'😀' },
+  { tier:2, en:'I am sad', emoji:'😢' },
+  { tier:2, en:'I am tired', emoji:'😴' },
+  { tier:2, en:'I like cats', emoji:'🐱' },
+  { tier:2, en:'I like dogs', emoji:'🐶' },
+  { tier:2, en:'I have a dog', emoji:'🐶' },
+  { tier:2, en:'I have a cat', emoji:'🐱' },
+  { tier:2, en:'I can run fast', emoji:'🏃' },
+  { tier:3, en:'I like the red apple', emoji:'🍎' },
+  { tier:3, en:'The big dog can run', emoji:'🐶' },
+  { tier:3, en:'I am very happy today', emoji:'😀' },
+  { tier:3, en:'I like to eat cake', emoji:'🍰' },
+  { tier:3, en:'My mom is very happy', emoji:'👩' },
+];
+
 // ---------------- ADAPTIVE DIFFICULTY CONFIG ----------------
 const PHASE_WORD_COUNT = 6;
 const MIN_DIFFICULTY = 2;
 const MAX_DIFFICULTY = 6;
+const PHRASE_START_DIFFICULTY = 4; // from this difficulty level onward, phases use phrases instead of single words
 const MAX_VOICE_ATTEMPTS = 3;
 const STORAGE_KEY = 'safariEnglishProgress';
-const DIFF_LABELS = { 2:'Nível fácil', 3:'Nível fácil', 4:'Nível médio', 5:'Nível difícil', 6:'Nível avançado' };
+const DIFF_LABELS = { 2:'Nível fácil', 3:'Nível fácil', 4:'Frases · fácil', 5:'Frases · médio', 6:'Frases · difícil' };
 
-function getSpeechRate(difficultyLevel){
+function getWordSpeechRate(difficultyLevel){
   return 0.8 + (difficultyLevel - MIN_DIFFICULTY) * 0.035;
+}
+function getPhraseSpeechRate(){
+  return 0.82; // keep phrases clear and a bit slower regardless of level
 }
 
 // ---------------- STORAGE ----------------
@@ -454,11 +485,25 @@ function isCloseMatch(said, target){
   if(!s) return false;
   if(s === t || s.includes(t) || t.includes(s)) return true;
   const dist = levenshtein(s, t);
-  return dist <= Math.max(1, Math.floor(t.length * 0.4));
+  const tolerance = t.length <= 4 ? 2 : Math.max(1, Math.floor(t.length * 0.4));
+  return dist <= tolerance;
+}
+function isClosePhraseMatch(said, target){
+  const saidWords = normalizeWord(said).split(' ').filter(Boolean);
+  const targetWords = normalizeWord(target).split(' ').filter(Boolean);
+  if(!saidWords.length || !targetWords.length) return false;
+  let matchCount = 0;
+  targetWords.forEach((tw) => {
+    if(saidWords.some((sw) => sw === tw || levenshtein(sw, tw) <= 1)) matchCount++;
+  });
+  return (matchCount / targetWords.length) >= 0.7;
 }
 
 // ---------------- STATE ----------------
 let currentCategory = null;
+let currentReviewCategory = null;
+let currentPhaseMode = 'word'; // 'word' | 'phrase'
+let currentPhaseTier = 1;
 let currentOptionsCount = MIN_DIFFICULTY;
 let currentRate = 0.8;
 let phaseWords = [];
@@ -466,6 +511,7 @@ let roundIndex = 0;
 let roundCorrectFirstTry = 0;
 let awaitingAnswer = true;
 let triedWrongThisWord = false;
+let phraseFirstTrySuccess = false;
 let voiceAttempts = 0;
 let onGameScreen = false;
 
@@ -517,11 +563,27 @@ function shuffle(arr){
   return a;
 }
 
-function speak(word, rate){
+let cachedVoices = [];
+function loadVoices(){
+  cachedVoices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+}
+if('speechSynthesis' in window){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+function pickBestVoice(lang){
+  const candidates = cachedVoices.filter(v => v.lang && v.lang.toLowerCase().startsWith(lang.toLowerCase()));
+  if(!candidates.length) return null;
+  const preferred = candidates.find(v => /Google|Natural|Online|Wavenet/i.test(v.name));
+  return preferred || candidates[0];
+}
+function speak(text, rate, lang){
   if(!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(word);
-  u.lang = 'en-US'; u.rate = rate || 0.85; u.pitch = 1.05;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang || 'en-US'; u.rate = rate || 0.85; u.pitch = 1.05;
+  const voice = pickBestVoice(u.lang);
+  if(voice) u.voice = voice;
   window.speechSynthesis.speak(u);
 }
 
@@ -552,15 +614,28 @@ window.addEventListener('beforeunload', () => saveProgress());
 
 function updateMiniTimer(){ miniTimer.textContent = `⏱ ${fmtTime(getTodaySeconds())} hoje`; }
 
+function determinePhaseMode(difficultyLevel){
+  return difficultyLevel >= PHRASE_START_DIFFICULTY ? 'phrase' : 'word';
+}
+function determinePhaseTier(difficultyLevel){
+  return Math.min(3, Math.max(1, difficultyLevel - PHRASE_START_DIFFICULTY + 1));
+}
+
 // ---------------- HOME SCREEN ----------------
 function renderHome(){
   const unlockedCount = Math.min(CATEGORIES.length, progress.phaseNumber);
   const featured = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
+  const mode = determinePhaseMode(progress.difficultyLevel);
   const seconds = getTodaySeconds();
   const pct = Math.min(100, Math.round((seconds / 1800) * 100));
 
   dayNumLabel.textContent = `Fase ${progress.phaseNumber}`;
-  dayCatLabel.textContent = `${featured.name} · ${featured.sub}`;
+  if(mode === 'phrase'){
+    const tier = determinePhaseTier(progress.difficultyLevel);
+    dayCatLabel.textContent = `Frasezinhas em inglês 💬 (nível ${tier})`;
+  } else {
+    dayCatLabel.textContent = `${featured.name} · ${featured.sub}`;
+  }
   diffBadge.textContent = DIFF_LABELS[progress.difficultyLevel] || 'Nível fácil';
   goalTimeLabel.textContent = `${fmtTime(seconds)}`;
   goalFill.style.width = pct + '%';
@@ -575,7 +650,7 @@ function renderHome(){
     const chip = document.createElement('button');
     chip.className = 'unlock-chip';
     chip.innerHTML = `<span class="uc-emoji">${cat.emoji}</span><span class="uc-name">${cat.name}</span>`;
-    chip.addEventListener('click', () => startPhase(cat, false));
+    chip.addEventListener('click', () => startPhase(false, cat));
     unlockedGrid.appendChild(chip);
   });
 
@@ -589,10 +664,7 @@ function renderHome(){
   showScreen('home');
 }
 
-playTodayBtn.addEventListener('click', () => {
-  const featured = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
-  startPhase(featured, true);
-});
+playTodayBtn.addEventListener('click', () => startPhase(true));
 
 // ---------------- GAME LOGIC ----------------
 function buildPhaseWordPool(featuredCat){
@@ -606,15 +678,35 @@ function buildPhaseWordPool(featuredCat){
   return shuffle(pool).slice(0, Math.min(PHASE_WORD_COUNT, pool.length));
 }
 
-function startPhase(category, isMainPhase){
-  currentCategory = category;
-  currentOptionsCount = progress.difficultyLevel;
-  currentRate = getSpeechRate(progress.difficultyLevel);
-  phaseWords = isMainPhase ? buildPhaseWordPool(category) : shuffle(category.words).slice(0, Math.min(PHASE_WORD_COUNT, category.words.length));
+function startPhase(isMainPhase, reviewCategory){
+  if(isMainPhase){
+    const featured = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
+    currentPhaseMode = determinePhaseMode(progress.difficultyLevel);
+    if(currentPhaseMode === 'word'){
+      currentCategory = featured;
+      currentOptionsCount = progress.difficultyLevel;
+      currentRate = getWordSpeechRate(progress.difficultyLevel);
+      phaseWords = buildPhaseWordPool(featured).map(w => ({...w, type:'word'}));
+      levelHeading.textContent = `Fase ${progress.phaseNumber} · ${featured.name}`;
+    } else {
+      currentPhaseTier = determinePhaseTier(progress.difficultyLevel);
+      currentRate = getPhraseSpeechRate();
+      const tierPhrases = PHRASES.filter(p => p.tier === currentPhaseTier);
+      phaseWords = shuffle(tierPhrases).slice(0, Math.min(PHASE_WORD_COUNT, tierPhrases.length)).map(p => ({...p, type:'phrase'}));
+      levelHeading.textContent = `Fase ${progress.phaseNumber} · Frases (nível ${currentPhaseTier})`;
+    }
+  } else {
+    currentPhaseMode = 'word';
+    currentCategory = reviewCategory;
+    currentReviewCategory = reviewCategory;
+    currentOptionsCount = progress.difficultyLevel >= PHRASE_START_DIFFICULTY ? MAX_DIFFICULTY : progress.difficultyLevel;
+    currentRate = getWordSpeechRate(Math.min(progress.difficultyLevel, MAX_DIFFICULTY));
+    phaseWords = shuffle(reviewCategory.words).slice(0, Math.min(PHASE_WORD_COUNT, reviewCategory.words.length)).map(w => ({...w, type:'word'}));
+    levelHeading.textContent = `Revisão · ${reviewCategory.name}`;
+  }
+  startPhase._isMain = isMainPhase;
   roundIndex = 0;
   roundCorrectFirstTry = 0;
-  levelHeading.textContent = isMainPhase ? `Fase ${progress.phaseNumber} · ${category.name}` : `Revisão · ${category.name}`;
-  startPhase._isMain = isMainPhase;
   buildProgress();
   showScreen('game');
   updateMiniTimer();
@@ -647,12 +739,19 @@ function loadWord(){
   awaitingAnswer = true;
   triedWrongThisWord = false;
   feedback.classList.remove('show','good','bad');
-  tapStep.style.display = '';
-  optionsGrid.style.display = '';
-  voiceStep.classList.remove('active');
   updateProgress();
 
   const current = phaseWords[roundIndex];
+
+  if(current.type === 'phrase'){
+    showVoiceStep();
+    return;
+  }
+
+  tapStep.style.display = '';
+  optionsGrid.style.display = '';
+  voiceStep.classList.remove('active');
+
   document.querySelector('.prompt-pt').textContent = 'Toque na imagem certa';
   targetWordEl.textContent = current.en;
 
@@ -718,24 +817,42 @@ function showVoiceStep(){
   voiceStep.classList.add('active');
   voiceStatus.textContent = '';
   voiceStatus.className = 'voice-status';
-  voiceHint.textContent = 'Toque no microfone e repita a palavra';
   voiceAttempts = 0;
+  phraseFirstTrySuccess = false;
   const current = phaseWords[roundIndex];
   voiceTarget.textContent = current.en;
+
+  const instructionsEl = document.querySelector('.voice-instructions');
+  if(current.type === 'phrase'){
+    instructionsEl.textContent = 'Agora repete a frase:';
+    voiceHint.textContent = 'Toque no microfone e fale a frase toda';
+  } else {
+    instructionsEl.textContent = 'Agora fala em voz alta:';
+    voiceHint.textContent = 'Toque no microfone e repita a palavra';
+  }
 
   if(!recognition){
     voiceStatus.textContent = 'Seu navegador não suporta o microfone aqui 😕';
     voiceHint.textContent = 'Vamos continuar mesmo assim!';
     micBtn.disabled = true;
-    setTimeout(() => advanceAfterVoice(true), 1400);
+    setTimeout(() => advanceAfterVoice(), 1400);
   } else {
     micBtn.disabled = false;
   }
 }
 
+function checkAlternativesForMatch(results, target, matcherFn){
+  for(let i=0; i<results.length; i++){
+    if(matcherFn(results[i].transcript, target)) return results[i].transcript;
+  }
+  return null;
+}
+
 micBtn.addEventListener('click', () => {
   if(!recognition || micBtn.disabled) return;
   const current = phaseWords[roundIndex];
+  const isPhrase = current.type === 'phrase';
+  const matcherFn = isPhrase ? isClosePhraseMatch : isCloseMatch;
   micBtn.classList.add('listening');
   voiceStatus.textContent = 'Ouvindo... 👂';
   voiceStatus.className = 'voice-status';
@@ -744,24 +861,28 @@ micBtn.addEventListener('click', () => {
   let handled = false;
   recognition.onresult = (event) => {
     handled = true;
-    const said = event.results[0][0].transcript;
-    if(isCloseMatch(said, current.en)){
-      voiceStatus.textContent = `Perfeito! Você falou "${said}" 🎉`;
+    const alternatives = event.results[0];
+    const matchedText = checkAlternativesForMatch(alternatives, current.en, matcherFn);
+    const bestGuess = alternatives[0].transcript;
+
+    if(matchedText){
+      if(voiceAttempts === 0) phraseFirstTrySuccess = true;
+      voiceStatus.textContent = `Perfeito! Você falou "${matchedText}" 🎉`;
       voiceStatus.className = 'voice-status good';
       progress.totalStars++;
       refreshStarCount();
       burstConfetti();
       micBtn.classList.remove('listening');
-      setTimeout(() => advanceAfterVoice(true), 1200);
+      setTimeout(() => advanceAfterVoice(), 1200);
     } else {
       voiceAttempts++;
       micBtn.classList.remove('listening');
       if(voiceAttempts >= MAX_VOICE_ATTEMPTS){
         voiceStatus.textContent = `Quase lá! A gente pratica essa de novo depois 💪`;
         voiceStatus.className = 'voice-status bad';
-        setTimeout(() => advanceAfterVoice(false), 1400);
+        setTimeout(() => advanceAfterVoice(), 1400);
       } else {
-        voiceStatus.textContent = `Quase! Ouvi "${said}" — tenta de novo 🙂`;
+        voiceStatus.textContent = `Quase! Ouvi "${bestGuess}" — tenta de novo 🙂`;
         voiceStatus.className = 'voice-status bad';
         micBtn.disabled = false;
       }
@@ -774,7 +895,7 @@ micBtn.addEventListener('click', () => {
     if(voiceAttempts >= MAX_VOICE_ATTEMPTS){
       voiceStatus.textContent = 'Não consegui ouvir — vamos seguir em frente!';
       voiceStatus.className = 'voice-status bad';
-      setTimeout(() => advanceAfterVoice(false), 1400);
+      setTimeout(() => advanceAfterVoice(), 1400);
     } else {
       voiceStatus.textContent = 'Não peguei direito, tenta de novo 🙂';
       voiceStatus.className = 'voice-status bad';
@@ -789,15 +910,22 @@ micBtn.addEventListener('click', () => {
   try{ recognition.start(); }catch(e){ micBtn.disabled = false; micBtn.classList.remove('listening'); }
 });
 
-function advanceAfterVoice(gotCorrectVoice){
-  if(!triedWrongThisWord) roundCorrectFirstTry++;
+function advanceAfterVoice(){
+  const current = phaseWords[roundIndex];
+  if(current.type === 'phrase'){
+    if(phraseFirstTrySuccess) roundCorrectFirstTry++;
+  } else {
+    if(!triedWrongThisWord) roundCorrectFirstTry++;
+  }
   roundIndex++;
   loadWord();
 }
 
 function finishPhase(){
   const isMain = !!startPhase._isMain;
-  const accuracy = phaseWords.length ? roundCorrectFirstTry / phaseWords.length : 0;
+  const total = phaseWords.length;
+  const accuracy = total ? roundCorrectFirstTry / total : 0;
+  const starRating = accuracy >= 0.85 ? 3 : accuracy >= 0.6 ? 2 : accuracy >= 0.35 ? 1 : 0;
 
   const resultStars = document.getElementById('resultStars');
   const resultText = document.getElementById('resultText');
@@ -806,38 +934,41 @@ function finishPhase(){
   const continueBtn = document.getElementById('continueBtn');
   const pauseBtn = document.getElementById('pauseBtn');
 
-  const filled = '⭐'.repeat(roundCorrectFirstTry) + '☆'.repeat(phaseWords.length - roundCorrectFirstTry);
-  resultStars.textContent = filled;
+  resultStars.textContent = '⭐'.repeat(starRating) + '☆'.repeat(3 - starRating);
 
   if(isMain){
-    let diffMsg = '';
-    if(accuracy >= 0.85 && progress.difficultyLevel < MAX_DIFFICULTY){
-      progress.difficultyLevel++;
-      diffMsg = 'Você mandou muito bem — vamos aumentar o desafio! 🚀';
-    } else if(accuracy < 0.5 && progress.difficultyLevel > MIN_DIFFICULTY){
-      progress.difficultyLevel--;
-      diffMsg = 'Vamos praticar um pouquinho mais fácil pra pegar o jeito 💛';
+    if(starRating <= 1){
+      // Didn't go well enough — repeat this phase before moving on.
+      if(accuracy < 0.5 && progress.difficultyLevel > MIN_DIFFICULTY){
+        progress.difficultyLevel--;
+      }
+      saveProgress();
+      resultTitle.textContent = 'Vamos tentar de novo! 💪';
+      resultMascot.textContent = '🔁';
+      resultText.textContent = `Você acertou ${roundCorrectFirstTry} de ${total}. Vamos praticar essa fase mais uma vez antes de avançar!`;
+      continueBtn.textContent = 'Tentar novamente ▶';
+      continueBtn.onclick = () => startPhase(true);
     } else {
-      diffMsg = 'Vamos continuar nesse nível — você está indo bem!';
+      let diffMsg = 'Muito bem, continue assim!';
+      if(accuracy >= 0.85 && progress.difficultyLevel < MAX_DIFFICULTY){
+        progress.difficultyLevel++;
+        diffMsg = 'Você mandou muito bem — vamos aumentar o desafio! 🚀';
+      }
+      progress.phaseNumber++;
+      saveProgress();
+      resultTitle.textContent = `Fase concluída! 🏆`;
+      resultMascot.textContent = '🏆';
+      resultText.textContent = `Você acertou ${roundCorrectFirstTry} de ${total}. ${diffMsg}`;
+      continueBtn.textContent = 'Próxima fase ▶';
+      continueBtn.onclick = () => startPhase(true);
     }
-    progress.phaseNumber++;
-    saveProgress();
-
-    resultTitle.textContent = `Fase concluída! 🏆`;
-    resultMascot.textContent = '🏆';
-    resultText.textContent = `Você acertou ${roundCorrectFirstTry} de ${phaseWords.length} palavras. ${diffMsg}`;
-    continueBtn.textContent = 'Próxima fase ▶';
-    continueBtn.onclick = () => {
-      const nextCat = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
-      startPhase(nextCat, true);
-    };
   } else {
     saveProgress();
     resultTitle.textContent = 'Muito bem!';
     resultMascot.textContent = '🎉';
-    resultText.textContent = `Você revisou ${currentCategory.name} e acertou ${roundCorrectFirstTry} de ${phaseWords.length}!`;
+    resultText.textContent = `Você revisou ${currentReviewCategory.name} e acertou ${roundCorrectFirstTry} de ${total}!`;
     continueBtn.textContent = 'Jogar de novo';
-    continueBtn.onclick = () => startPhase(currentCategory, false);
+    continueBtn.onclick = () => startPhase(false, currentReviewCategory);
   }
   pauseBtn.textContent = 'Voltar ao início';
   pauseBtn.onclick = () => renderHome();
@@ -863,6 +994,10 @@ document.getElementById('backBtn').addEventListener('click', () => { saveProgres
 // ---------------- INIT ----------------
 loadProgress();
 renderHome();
+
+setTimeout(() => {
+  speak('Olá Pietra, você é linda!', 0.95, 'pt-BR');
+}, 400);
 
 setTimeout(() => {
   const splash = document.getElementById('splashScreen');
