@@ -810,6 +810,7 @@ function loadProgress(){
   if(!progress.phraseUsage) progress.phraseUsage = {};
   if(!progress.badges) progress.badges = [];
   if(progress.placementTestDone === undefined) progress.placementTestDone = false;
+  progress.difficultyLevel = getDifficultyLevelForPhase(progress.phaseNumber);
 }
 function saveProgress(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
@@ -1064,6 +1065,21 @@ window.addEventListener('beforeunload', () => saveProgress());
 
 function updateMiniTimer(){ miniTimer.textContent = `⏱ ${fmtTime(getTodaySeconds())} hoje`; }
 
+const CATEGORY_UNLOCK_SPACING = 15; // a new category unlocks every 15 phases
+// Phase ranges: 1-99 Básico (word mode) · 100-199 Intermediário (short/medium phrases)
+// 200+ Avançado (long phrases, full-phrase writing from phase 250 on)
+function getDifficultyLevelForPhase(phaseNumber){
+  const p = phaseNumber || 1;
+  if(p < 50) return 2;
+  if(p < 100) return 3;
+  if(p < 150) return 4;
+  if(p < 200) return 5;
+  if(p < 250) return 6;
+  return 7;
+}
+function getUnlockedCategoryCount(phaseNumber){
+  return Math.min(CATEGORIES.length, Math.max(1, Math.ceil((phaseNumber || 1) / CATEGORY_UNLOCK_SPACING)));
+}
 function determinePhaseMode(difficultyLevel){
   return difficultyLevel >= PHRASE_START_DIFFICULTY ? 'phrase' : 'word';
 }
@@ -1073,7 +1089,7 @@ function determinePhaseTier(difficultyLevel){
 
 // ---------------- HOME SCREEN ----------------
 function renderHome(){
-  const unlockedCount = Math.min(CATEGORIES.length, progress.phaseNumber);
+  const unlockedCount = getUnlockedCategoryCount(progress.phaseNumber);
   const featured = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
   const mode = determinePhaseMode(progress.difficultyLevel);
   const seconds = getTodaySeconds();
@@ -1225,7 +1241,7 @@ function renderWeeklySummary(){
 
 // ---------------- GAME LOGIC ----------------
 function buildPhaseWordPool(featuredCat){
-  const unlockedCount = Math.min(CATEGORIES.length, progress.phaseNumber);
+  const unlockedCount = getUnlockedCategoryCount(progress.phaseNumber);
   let pool = [...featuredCat.words];
   if(unlockedCount > 1){
     const reviewCats = CATEGORIES.slice(0, unlockedCount - 1);
@@ -1726,10 +1742,8 @@ function finishPhase(){
 
   if(isMain){
     if(starRating <= 1){
-      // Didn't go well enough — repeat this phase before moving on.
-      if(accuracy < 0.5 && progress.difficultyLevel > MIN_DIFFICULTY){
-        progress.difficultyLevel--;
-      }
+      // Didn't go well enough — repeat this same phase before moving on. Level/difficulty
+      // stays exactly where it is, since it's simply a reflection of the current phase number.
       saveProgress();
       resultTitle.textContent = 'Vamos tentar de novo! 💪';
       resultMascot.textContent = '🔁';
@@ -1737,17 +1751,22 @@ function finishPhase(){
       continueBtn.textContent = 'Tentar novamente ▶';
       continueBtn.onclick = () => startPhase(true);
     } else {
-      let diffMsg = 'Muito bem, continue assim!';
-      if(accuracy >= 0.85 && progress.difficultyLevel < MAX_DIFFICULTY){
-        progress.difficultyLevel++;
-        diffMsg = 'Você mandou muito bem — vamos aumentar o desafio! 🚀';
-      }
       const completedPhase = progress.phaseNumber;
+      const prevLevelKey = LEVEL_KEY_BY_DIFFICULTY(getDifficultyLevelForPhase(completedPhase));
       progress.phaseNumber++;
+      progress.difficultyLevel = getDifficultyLevelForPhase(progress.phaseNumber);
+      const newLevelKey = LEVEL_KEY_BY_DIFFICULTY(progress.difficultyLevel);
       const newBadges = checkAndAwardBadges(completedPhase);
       saveProgress();
+
+      const levelNames = { basico:'Básico 🌱', intermediario:'Intermediário 🌿', avancado:'Avançado 🌳' };
+      let diffMsg = 'Muito bem, continue assim!';
+      if(newLevelKey !== prevLevelKey){
+        diffMsg = `Você subiu de nível! Bem-vindo(a) ao nível ${levelNames[newLevelKey]}!`;
+      }
+
       resultTitle.textContent = `Fase concluída! 🏆`;
-      resultMascot.textContent = newBadges.length ? newBadges[0].emoji : '🏆';
+      resultMascot.textContent = newBadges.length ? newBadges[0].emoji : (newLevelKey !== prevLevelKey ? '🚀' : '🏆');
       resultText.textContent = `Você acertou ${roundCorrectFirstTry} de ${total}. ${diffMsg}`;
       if(newBadges.length){
         resultText.textContent += ` 🎖️ Novo emblema: "${newBadges[0].name}"!`;
@@ -2172,17 +2191,17 @@ function updateLevelButtonsHighlight(){
   document.getElementById('levelAvancado').classList.toggle('selected', current === 'avancado');
 }
 const MANUAL_LEVEL_MAP = {
-  basico: { diff: MIN_DIFFICULTY, phase: 1, label: 'Básico' },
-  intermediario: { diff: 4, phase: 10, label: 'Intermediário' },
-  avancado: { diff: 7, phase: 20, label: 'Avançado' },
+  basico: { phase: 1, label: 'Básico' },
+  intermediario: { phase: 100, label: 'Intermediário' },
+  avancado: { phase: 200, label: 'Avançado' },
 };
 function applyManualLevel(levelKey){
   const m = MANUAL_LEVEL_MAP[levelKey];
   if(!m) return;
   const sure = confirm(`Mudar para o nível ${m.label}? Isso ajusta a fase atual e a dificuldade dela.`);
   if(!sure) return;
-  progress.difficultyLevel = m.diff;
   progress.phaseNumber = Math.max(progress.phaseNumber, m.phase);
+  progress.difficultyLevel = getDifficultyLevelForPhase(progress.phaseNumber);
   progress.placementTestDone = true;
   saveProgress();
   updateLevelButtonsHighlight();
@@ -2408,15 +2427,15 @@ function finishPlacementTest(){
   const overall = (vocabScore * 0.5) + (phraseScore * 0.3) + (speakScore * 0.2);
   const totalCorrect = placementResults.filter((r) => r.correct).length;
 
-  let startPhaseNum, startDiff, level;
+  let startPhaseNum, level;
   if(overall >= 0.8){
-    startDiff = 6; startPhaseNum = 18; level = 'avançado';
+    startPhaseNum = 200; level = 'avançado';
   } else if(overall >= 0.45){
-    startDiff = 4; startPhaseNum = 10; level = 'intermediário';
+    startPhaseNum = 100; level = 'intermediário';
   } else {
-    startDiff = MIN_DIFFICULTY; startPhaseNum = 1; level = 'iniciante';
+    startPhaseNum = 1; level = 'iniciante';
   }
-  pendingPlacementResult = { startPhaseNum, startDiff };
+  pendingPlacementResult = { startPhaseNum };
 
   document.getElementById('placementResultTitle').textContent = `Nível ${level}! 🎯`;
   document.getElementById('placementResultText').textContent =
@@ -2433,7 +2452,7 @@ document.getElementById('skipPlacementBtn').addEventListener('click', () => {
 document.getElementById('placementStartJourneyBtn').addEventListener('click', () => {
   if(pendingPlacementResult){
     progress.phaseNumber = pendingPlacementResult.startPhaseNum;
-    progress.difficultyLevel = pendingPlacementResult.startDiff;
+    progress.difficultyLevel = getDifficultyLevelForPhase(progress.phaseNumber);
   }
   progress.placementTestDone = true;
   saveProgress();
@@ -2464,7 +2483,7 @@ document.getElementById('matchBackBtn').addEventListener('click', () => renderHo
 document.getElementById('matchNewRoundBtn').addEventListener('click', startMatchRound);
 
 function startMatchRound(){
-  const unlockedCount = Math.min(CATEGORIES.length, progress.phaseNumber);
+  const unlockedCount = getUnlockedCategoryCount(progress.phaseNumber);
   const featured = CATEGORIES[Math.min(progress.phaseNumber - 1, CATEGORIES.length - 1)];
   let pool = [...featured.words];
   if(pool.length < MATCH_ITEM_COUNT){
